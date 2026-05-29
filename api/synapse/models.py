@@ -165,8 +165,7 @@ class NotesRequest(BaseModel):
     content: str = ""
 
 
-# ── Classroom workflow DTOs ─────────────────────────────────────────────────────
-
+# ── Classroom workflow DTOs ────────────────────────────────────────────────────
 
 class InviteStudentRequest(BaseModel):
     student_id: str
@@ -213,6 +212,38 @@ class KnowledgeGapStartRequest(BaseModel):
     mode: Literal["manual", "ai"] = "ai"
     topics: list[str] = Field(default_factory=list)
     max_topics: int = Field(default=3, ge=1, le=8)
+
+
+# ── Flashcards ────────────────────────────────────────────────────────────────
+
+class Flashcard(BaseModel):
+    front: str
+    back: str
+
+
+class FlashcardsRequest(BaseModel):
+    student_id: str
+    topic: str
+    content: str = ""
+
+
+class FlashcardsResponse(BaseModel):
+    student_id: str
+    topic: str
+    flashcards: list[Flashcard]
+
+
+# ── Student auth / class join ──────────────────────────────────────────────────
+
+class StudentAuthRequest(BaseModel):
+    id: str
+    email: str
+    name: str = ""
+
+
+class StudentJoinRequest(BaseModel):
+    student_id: str
+    code: str
 
 
 # ── Teacher models ─────────────────────────────────────────────────────────────

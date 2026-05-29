@@ -22,7 +22,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # ── Student routers (student developer owns these) ────────────────────────────
-from synapse.routers.student import diagnose, tutor, assess, notes, knowledge_map, classroom as classroom_router
+from synapse.routers.student import (
+    diagnose, tutor, assess, notes, knowledge_map,
+    classroom as classroom_router,
+    auth as student_auth,
+    classes as student_classes,
+    flashcards as student_flashcards,
+)
 
 # ── Teacher routers (teacher developer owns these) ────────────────────────────
 from synapse.routers.teacher import auth as teacher_auth, classes, analytics, reports
@@ -59,6 +65,9 @@ app.include_router(assess.router)
 app.include_router(notes.router)
 app.include_router(knowledge_map.router)
 app.include_router(classroom_router.router)
+app.include_router(student_auth.router)
+app.include_router(student_classes.router)
+app.include_router(student_flashcards.router)
 
 # ── Mount teacher routes (/teacher/...) ───────────────────────────────────────
 app.include_router(teacher_auth.router)
@@ -80,13 +89,17 @@ async def root():
         "service": "Synapse AI",
         "version": "0.1.0",
         "routes": {
-            "student": ["/student/diagnose/quiz", "/student/diagnose/evaluate",
+            "student": ["/student/auth/register", "/student/auth/{id}",
+                        "/student/classes/join", "/student/classes/{student_id}",
+                        "/student/classes/{classroom_id}/topics",
+                        "/student/diagnose/quiz", "/student/diagnose/evaluate",
                         "/student/knowledge-map/{id}", "/student/tutor/stream",
                         "/student/assess/{topic}", "/student/assess/grade",
-                        "/student/notes/", "/student/notes/{id}",
+                        "/student/notes/", "/student/notes/{student_id}",
                         "/student/classrooms/invites/{student_id}",
                         "/student/classrooms/invites/{code}/accept",
-                        "/student/classrooms/knowledge-gap/start"],
+                        "/student/classrooms/knowledge-gap/start",
+                        "/student/flashcards/", "/student/flashcards/{student_id}/{topic}"],
             "teacher": ["/teacher/auth/register", "/teacher/auth/{id}",
                         "/teacher/classes/{teacher_id}/all", "/teacher/classes/",
                         "/teacher/classes/{id}", "/teacher/classes/{id}/syllabus",
