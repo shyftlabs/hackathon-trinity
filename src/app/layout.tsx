@@ -13,8 +13,8 @@ const firaCode = Fira_Code({
 });
 
 export const metadata: Metadata = {
-  title: "Flux | Learning adapts. You flow.",
-  description: "AI-powered adaptive learning companion that transforms academic content into personalized study materials.",
+  title: "Synapse AI | Personalized Learning",
+  description: "Synapse AI — AI-powered personalized tutoring. Diagnose your knowledge, learn with a grounded tutor, verify mastery.",
 };
 
 export default function RootLayout({

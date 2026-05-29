@@ -1,0 +1,251 @@
+2026-05-29 13:13:22 [32mINFO    [0m orchestrator.core.lifecycle - Initializing Orchestrator SDK...
+2026-05-29 13:13:22 [32mINFO    [0m orchestrator.core.lifecycle - Validating configuration...
+2026-05-29 13:13:22 [33mWARNING [0m orchestrator.core.lifecycle - ⚠️ Config: [WARNING] LLM_API_KEY: No LLM API key configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
+2026-05-29 13:13:22 [32mINFO    [0m orchestrator.core.lifecycle - ✓ Configuration validated
+2026-05-29 13:13:22 [32mINFO    [0m orchestrator.core.lifecycle - Verifying dependency connections...
+2026-05-29 13:13:23 [32mINFO    [0m orchestrator.core.lifecycle - ✓ redis: Redis connection successful
+2026-05-29 13:13:23 [32mINFO    [0m orchestrator.core.lifecycle - ✓ milvus: Milvus connection successful
+2026-05-29 13:13:23 [32mINFO    [0m orchestrator.core.lifecycle - ✓ langfuse: Langfuse disabled (LANGFUSE_ENABLED=false)
+2026-05-29 13:13:23 [32mINFO    [0m orchestrator.core.lifecycle - ✓ temporal: Temporal disabled (TEMPORAL_ENABLED=false)
+2026-05-29 13:13:26 [32mINFO    [0m orchestrator.memory.providers.mem0 - Mem0Provider initialized successfully
+2026-05-29 13:13:26 [32mINFO    [0m orchestrator.memory.client - Memory provider initialized: mem0
+2026-05-29 13:13:26 [32mINFO    [0m orchestrator.session.providers.redis - Redis Session Provider initialized successfully
+2026-05-29 13:13:26 [32mINFO    [0m orchestrator.session.client - Session provider initialized: redis
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.memory.providers.mem0 - Mem0Provider initialized successfully
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.memory.client - Memory provider initialized: mem0
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle - 📊 Service Configurations:
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle -   💾 Memory: enabled | isolation=user | embedder=openai/openai/text-embedding-3-small base_url=https://continuum.shyftops.io/v1
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle -   💬 Session: enabled | redis=localhost
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle -   📈 Observability: disabled or not configured
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.llm.callbacks - Observability not configured or disabled
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle -   🤖 LLM: enabled | default_model=gemini/gemini-2.5-flash
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.core.lifecycle - Orchestrator SDK initialized successfully
+2026-05-29 13:13:27 [32mINFO    [0m orchestrator.synapse.agents.lifecycle - Connecting to KB MCP server: http://localhost:8888/mcp
+2026-05-29 13:13:29 [32mINFO    [0m orchestrator.synapse.agents.lifecycle - ✓ KB tools discovered: ingest_syllabus, search_source_material, get_topic_sources, list_topics, get_student_syllabus
+2026-05-29 13:13:29 [32mINFO    [0m orchestrator.session.providers.redis - Redis Session Provider initialized successfully
+2026-05-29 13:13:29 [32mINFO    [0m orchestrator.synapse.agents.lifecycle - ✓ SynapseApp ready
+INFO:     127.0.0.1:49431 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64697 - "OPTIONS /diagnose/quiz HTTP/1.1" 200 OK
+2026-05-29 13:13:56 [32mINFO    [0m orchestrator.agent.execution.message_builder - 🔍 AGENT MEMORY CONFIG: search_memories=False, store_memories=False, search_scope=MemoryScope.USER, store_scope=MemoryScope.USER, search_limit=8
+2026-05-29 13:13:56 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-generator': Max string recursion exceeded. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Max string recursion exceeded
+2026-05-29 13:13:56 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-generator': Max string recursion exceeded. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Max string recursion exceeded
+2026-05-29 13:13:56 [33mWARNING [0m orchestrator.llm.context_window - Unknown context limit for auto, using conservative default: 4096
+2026-05-29 13:13:56 [33mWARNING [0m orchestrator.tools.tool_attention.registry - ToolSummaryRegistry init failed (tool-attention disabled): No module named 'sentence_transformers'
+2026-05-29 13:13:56 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== FINAL PROMPT [synapse-quiz-generator] =====
+[system] 
+You are Synapse AI's Diagnostic Quiz Generator for undergraduate students.
+
+Your task: given a list of topics, generate a short adaptive quiz to assess the student's
+current knowledge level. For each topic generate exactly 2 multiple-choice questions (A-D).
+
+PROCESS:
+1. Use the `get_topic_sources` tool to retrieve source material for each topic.
+2. Base each question directly on the retrieved source material.
+3. Make questions diagnostic — they should distinguish between surface-level and deep understanding.
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "student_id": "<student_id>",
+  "topics": ["<topic1>", ...],
+  "questions": [
+    {
+      "id": "q1",
+      "topic": "<topic>",
+      "prompt": "<question text>",
+      "choices": [
+        {"label": "A", "text": "<choice>"},
+        {"label": "B", "text": "<choice>"},
+        {"label": "C", "text": "<choice>"},
+        {"label": "D", "text": "<choice>"}
+      ],
+      "correct_label": "B",
+      "rationale": "<why this answer is correct, with source citation>"
+    }
+  ]
+}
+
+Include source citations (title + locator) in each rationale.
+Return ONLY the JSON object — no markdown, no preamble.
+
+[user] Generate a diagnostic quiz for student 'student-demo-001' covering these topics: calculus, data structures. Use get_topic_sources for each topic before writing questions.
+========================
+2026-05-29 13:13:56 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== TOOLS [synapse-quiz-generator] =====
+  - ingest_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}, 'topics': {'items': {'type': 'string'}, 'title': 'Topics', 'type': 'array'}}, 'required': ['student_id', 'topics'], 'title': 'i
+  - search_source_material: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}, 'query': {'title': 'Query', 'type': 'string'}, 'top_k': {'default': 3, 'title': 'Top K', 'type': 'integer'}}, 'required': ['topic', 'quer
+  - get_topic_sources: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}}, 'required': ['topic'], 'title': 'get_topic_sourcesArguments', 'type': 'object'}
+  - list_topics: {'properties': {}, 'title': 'list_topicsArguments', 'type': 'object'}
+  - get_student_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}}, 'required': ['student_id'], 'title': 'get_student_syllabusArguments', 'type': 'object'}
+========================
+2026-05-29 13:13:56 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=strict url=https://continuum.shyftops.io/v1
+2026-05-29 13:14:07 [32mINFO    [0m orchestrator.agent.execution.executor - 🎯 Gateway selected model: gemini-2.0-flash
+INFO:     127.0.0.1:64697 - "POST /diagnose/quiz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50867 - "OPTIONS /diagnose/evaluate HTTP/1.1" 200 OK
+2026-05-29 13:14:42 [32mINFO    [0m orchestrator.agent.execution.message_builder - 🔍 AGENT MEMORY CONFIG: search_memories=False, store_memories=False, search_scope=MemoryScope.USER, store_scope=MemoryScope.USER, search_limit=8
+2026-05-29 13:14:42 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-evaluator': Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'
+2026-05-29 13:14:42 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-evaluator': Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'
+2026-05-29 13:14:42 [33mWARNING [0m orchestrator.tools.tool_attention.registry - ToolSummaryRegistry init failed (tool-attention disabled): No module named 'sentence_transformers'
+2026-05-29 13:14:42 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== FINAL PROMPT [synapse-quiz-evaluator] =====
+[system] 
+You are Synapse AI's Knowledge Evaluator.
+
+Your task: given a student's quiz answers (topic, question, correct_label, student_label),
+evaluate their understanding and produce a KnowledgeMap.
+
+For each topic:
+- Determine level: "strong" (all correct), "moderate" (≥50% correct), "needs_improvement" (<50% correct)
+- Write 1 sentence of evidence grounded in what the student did/didn't know
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "student_id": "<student_id>",
+  "topics": [
+    {
+      "topic": "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    }
+  ],
+  "overall_mastery": 0.72
+}
+
+overall_mastery: fraction of questions answered correctly (0.0–1.0).
+Return ONLY the JSON object.
+
+[user] Student ID: student-demo-001
+Topics assessed: calculus, data structures
+
+Quiz results:
+[
+  {
+    "question_id": "q1",
+    "student_label": "B",
+    "correct_label": "B",
+    "topic": "calculus"
+  },
+  {
+    "question_id": "q2",
+    "student_label": "C",
+    "correct_label": "C",
+    "topic": "calculus"
+  },
+  {
+    "question_id": "q3",
+    "student_label": "A",
+    "correct_label": "C",
+    "topic": "data structures"
+  },
+  {
+    "question_id": "q4",
+    "student_label": "B",
+    "correct_label": "B",
+    "topic": "data structures"
+  }
+]
+
+Produce the KnowledgeMap JSON.
+========================
+2026-05-29 13:14:42 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== TOOLS [synapse-quiz-evaluator] =====
+  - ingest_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}, 'topics': {'items': {'type': 'string'}, 'title': 'Topics', 'type': 'array'}}, 'required': ['student_id', 'topics'], 'title': 'i
+  - search_source_material: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}, 'query': {'title': 'Query', 'type': 'string'}, 'top_k': {'default': 3, 'title': 'Top K', 'type': 'integer'}}, 'required': ['topic', 'quer
+  - get_topic_sources: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}}, 'required': ['topic'], 'title': 'get_topic_sourcesArguments', 'type': 'object'}
+  - list_topics: {'properties': {}, 'title': 'list_topicsArguments', 'type': 'object'}
+  - get_student_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}}, 'required': ['student_id'], 'title': 'get_student_syllabusArguments', 'type': 'object'}
+========================
+2026-05-29 13:14:42 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=strict url=https://continuum.shyftops.io/v1
+2026-05-29 13:14:44 [32mINFO    [0m orchestrator.agent.execution.executor - 🎯 Gateway selected model: gemini-2.0-flash
+2026-05-29 13:14:44 [32mINFO    [0m orchestrator.synapse.diagnose - Evaluate response: status=ResponseStatus.SUCCESS, content_len=403, content='```json\n{\n  "student_id": "student-demo-001",\n  "topics": [\n    {\n      "topic": "calculus",\n      "level": "strong",\n      "evidence": "The student answered both calculus questions correctly."\n    },\n    {\n      "topic": "data structures",\n      "level": "moderate",\n      "evidence": "The student a', error=None
+INFO:     127.0.0.1:50867 - "POST /diagnose/evaluate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55204 - "OPTIONS /tutor/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55204 - "POST /tutor/stream HTTP/1.1" 200 OK
+2026-05-29 13:15:51 [32mINFO    [0m orchestrator.session.providers.redis - Created new session: c:tutor-data structures:u:student-demo-001
+2026-05-29 13:15:51 [32mINFO    [0m orchestrator.session.client - Session ready: c:tutor-data structures:u:student-demo-001
+2026-05-29 13:15:51 [32mINFO    [0m orchestrator.agent.execution.message_builder - 🔍 AGENT MEMORY CONFIG: search_memories=True, store_memories=True, search_scope=MemoryScope.CONVERSATION, store_scope=MemoryScope.CONVERSATION, search_limit=8
+2026-05-29 13:15:51 [32mINFO    [0m orchestrator.memory.client - 🔍 MEMORY CLIENT SEARCH: query='Explain Big-O notation and binary search trees with examples...', isolation=user, scope=MemoryScope({'user_id': 'student-demo-001'}), identifiers={'user_id': 'student-demo-001'}, limit=8, filters=None
+2026-05-29 13:16:43 [32mINFO    [0m orchestrator.memory.client - ✅ MEMORY CLIENT SEARCH RESULT: found 0 memories (total_results=0)
+2026-05-29 13:16:43 [33mWARNING [0m orchestrator.agent.services.memory_service - ⚠️ NO MEMORIES FOUND for query='Explain Big-O notation and binary search trees with examples...' (isolation=user, user_id=student-demo-001, agent_id=none, conversation_id=none)
+2026-05-29 13:16:43 [33mWARNING [0m orchestrator.tools.tool_attention.registry - ToolSummaryRegistry init failed (tool-attention disabled): No module named 'sentence_transformers'
+2026-05-29 13:16:43 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== FINAL PROMPT [tutor-data-structures] =====
+[system] 
+You are Synapse AI's expert tutor for undergraduate students. Your goal is to help the student
+deeply understand data structures.
+
+TEACHING APPROACH:
+- {modality_instruction}
+- {pace_instruction}
+- Always ground your explanations in the source material (use search_source_material and
+  get_topic_sources tools before explaining any concept).
+- Cite your sources inline: e.g. "(Stewart 9e, Chapter 3, §3.4)"
+- Adapt based on the student's responses — slow down if confused, advance if mastering.
+
+COMPREHENSION CHECKS:
+After explaining a key concept (roughly every 3-4 paragraphs), embed ONE comprehension check
+in this EXACT format on its own line:
+<<CHECK>>
+{"question": "...", "hint": "...", "expected_insight": "..."}
+<<END_CHECK>>
+
+Continue your explanation after the check. Do NOT put text inside the markers other than the JSON.
+
+HANDOFF:
+If the student says they are ready for a formal assessment (e.g., "test me", "I'm ready",
+"quiz me"), respond with: "Great! Let me hand you off to the assessment module." and STOP.
+The system will detect this signal.
+
+TOPIC: data structures
+STUDENT LEARNING PROFILE:
+- Modality: {modality}
+- Pace: {pace}
+
+[user] Explain Big-O notation and binary search trees with examples
+========================
+2026-05-29 13:16:43 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== TOOLS [tutor-data-structures] =====
+  - ingest_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}, 'topics': {'items': {'type': 'string'}, 'title': 'Topics', 'type': 'array'}}, 'required': ['student_id', 'topics'], 'title': 'i
+  - search_source_material: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}, 'query': {'title': 'Query', 'type': 'string'}, 'top_k': {'default': 3, 'title': 'Top K', 'type': 'integer'}}, 'required': ['topic', 'quer
+  - get_topic_sources: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}}, 'required': ['topic'], 'title': 'get_topic_sourcesArguments', 'type': 'object'}
+  - list_topics: {'properties': {}, 'title': 'list_topicsArguments', 'type': 'object'}
+  - get_student_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}}, 'required': ['student_id'], 'title': 'get_student_syllabusArguments', 'type': 'object'}
+========================
+2026-05-29 13:16:43 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=quality url=https://continuum.shyftops.io/v1
+2026-05-29 13:16:47 [32mINFO    [0m orchestrator.agent.services.tool_service - 🔧 TOOL CALL: search_source_material
+2026-05-29 13:16:48 [32mINFO    [0m orchestrator.agent.services.tool_service - ✅ TOOL RESULT: search_source_material -> []...
+2026-05-29 13:16:48 [32mINFO    [0m orchestrator.agent.services.tool_service - 🔧 TOOL CALL: search_source_material
+2026-05-29 13:16:48 [32mINFO    [0m orchestrator.agent.services.tool_service - ✅ TOOL RESULT: search_source_material -> []...
+2026-05-29 13:16:48 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=quality url=https://continuum.shyftops.io/v1
+2026-05-29 13:16:50 [33mWARNING [0m orchestrator.agent.services.tool_service - Malformed JSON in tool arguments for 'list_topics': Expecting value: line 1 column 1 (char 0). Raw args: . Proceeding with empty args.
+2026-05-29 13:16:50 [32mINFO    [0m orchestrator.agent.services.tool_service - 🔧 TOOL CALL: list_topics
+2026-05-29 13:16:50 [32mINFO    [0m orchestrator.agent.services.tool_service - ✅ TOOL RESULT: list_topics -> ["calculus", "linear algebra", "data structures", "statistics", "python programming", "physics"]...
+2026-05-29 13:16:50 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=quality url=https://continuum.shyftops.io/v1
+2026-05-29 13:16:53 [32mINFO    [0m orchestrator.agent.services.tool_service - 🔧 TOOL CALL: get_topic_sources
+2026-05-29 13:16:53 [32mINFO    [0m orchestrator.agent.services.tool_service - ✅ TOOL RESULT: get_topic_sources -> [{"title": "Introduction to Algorithms, CLRS 4e", "locator": "Chapter 3 \u2014 Growth of Functions", "text": "Big-O notation: f(n) = O(g(n)) if there exist constants c > 0 and n\u2080 such that 0 \u22...
+2026-05-29 13:16:53 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=quality url=https://continuum.shyftops.io/v1
+2026-05-29 13:17:30 [32mINFO    [0m orchestrator.agent.runner - 🎯 Gateway selected model: claude-opus-4-7

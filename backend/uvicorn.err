@@ -1,0 +1,14 @@
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\websockets\legacy\__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\uvicorn\protocols\websockets\websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [15236]
+INFO:     Waiting for application startup.
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\contextlib.py:109: DeprecationWarning: Use `streamable_http_client` instead.
+  self.gen = func(*args, **kwds)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\session\providers\redis.py:514: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+  pipe.setex(
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\session\providers\redis.py:418: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+  pipe.setex(metadata_key, self._config.ttl_seconds, metadata_json_updated)
