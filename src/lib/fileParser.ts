@@ -250,21 +250,10 @@ async function parseAudio(file: File): Promise<{ content: string; type: string }
     const fileSize = buffer.byteLength;
     const duration = estimateAudioDuration(buffer);
 
-    // If Google Cloud Speech API key is available, we could transcribe here
-    const speechAPIKey = process.env.GOOGLE_CLOUD_SPEECH_API_KEY;
-
-    if (speechAPIKey) {
-      // Transcription would go here (requires API setup)
-      return {
-        content: `[Audio file: ${file.name} | Duration: ~${duration}s | Size: ${(fileSize / 1024 / 1024).toFixed(1)}MB]\n\n[Audio transcription requires complete Google Cloud Speech API setup. Please add real API credentials to .env.local]`,
-        type: 'audio'
-      };
-    } else {
-      return {
-        content: `[Audio file: ${file.name} | Duration: ~${duration}s | Size: ${(fileSize / 1024 / 1024).toFixed(1)}MB]\n\n[To transcribe audio, set GOOGLE_CLOUD_SPEECH_API_KEY in .env.local]`,
-        type: 'audio'
-      };
-    }
+    return {
+      content: `[Audio file: ${file.name} | Duration: ~${duration}s | Size: ${(fileSize / 1024 / 1024).toFixed(1)}MB]\n\n[Audio transcription is not configured in this build.]`,
+      type: 'audio'
+    };
   } catch (error) {
     console.error('Audio parsing error:', error);
     return {
@@ -283,7 +272,7 @@ async function parseVideo(file: File): Promise<{ content: string; type: string }
     const videoMetadata = extractVideoMetadata(buffer);
 
     return {
-      content: `[Video file: ${file.name} | Size: ${(fileSize / 1024 / 1024).toFixed(1)}MB]\n\n[Video processing requires:\n1. Video frame extraction (ffmpeg)\n2. OCR on frames for text\n3. Audio track extraction and transcription]\n\nTo enable video processing:\n1. Install ffmpeg: brew install ffmpeg\n2. Configure GOOGLE_CLOUD_SPEECH_API_KEY for audio extraction`,
+      content: `[Video file: ${file.name} | Size: ${(fileSize / 1024 / 1024).toFixed(1)}MB]\n\n[Video processing requires:\n1. Video frame extraction (ffmpeg)\n2. OCR on frames for text\n3. Audio track extraction and transcription]`,
       type: 'video'
     };
   } catch (error) {

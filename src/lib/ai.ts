@@ -1,4 +1,3 @@
-import Cerebras from '@cerebras/cerebras_cloud_sdk';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 export type ModeId = "notes" | "flashcards" | "quiz" | "quest" | "visual" | "podcast" | "audio";
 
@@ -8,9 +7,96 @@ interface GenerationResult {
 }
 
 const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Rachel
+const CONTINUUM_MODEL = process.env.CONTINUUM_MODEL || "auto";
 
-// COMMENTED OUT APIs (to be uncommented once Cerebras API is working):
-// - Other APIs in .env.local (OpenAI, Replicate, Pinecone, Tavily) are not currently used in code
+type ContinuumMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+function getContinuumEndpoint(): string | null {
+  const gatewayUrl = process.env.SMART_GATEWAY_URL || process.env.CONTINUUM_API_URL;
+  if (!gatewayUrl) return null;
+
+  const trimmed = gatewayUrl.replace(/\/+$/, "");
+  if (trimmed.endsWith("/chat/completions")) {
+    return trimmed;
+  }
+  return `${trimmed}/chat/completions`;
+}
+
+function hasContinuumConfig(): boolean {
+  const apiKey = process.env.SMART_GATEWAY_API_KEY || process.env.CONTINUUM_API_KEY;
+  return Boolean(getContinuumEndpoint() && apiKey && !apiKey.startsWith("dummy"));
+}
+
+async function createContinuumChatCompletion(
+  messages: ContinuumMessage[],
+  options: {
+    maxTokens?: number;
+    temperature?: number;
+    metadata?: Record<string, string | number | boolean>;
+  } = {}
+): Promise<string> {
+  const endpoint = getContinuumEndpoint();
+  const apiKey = process.env.SMART_GATEWAY_API_KEY || process.env.CONTINUUM_API_KEY;
+
+  if (!endpoint || !apiKey) {
+    throw new Error("Continuum Smart Inference is not configured");
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: CONTINUUM_MODEL,
+      messages,
+      temperature: 1,
+      max_tokens: options.maxTokens ?? 8192,
+      stream: false,
+      metadata: options.metadata,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Continuum returned ${response.status}: ${errorText.substring(0, 300)}`);
+  }
+
+  const completion = await response.json();
+  const content = completion?.choices?.[0]?.message?.content;
+
+  if (typeof content !== "string") {
+    throw new Error("Continuum response did not include message content");
+  }
+
+  return content;
+}
+
+export async function generateContinuumText(systemInstruction: string, userPrompt: string): Promise<string | null> {
+  if (!hasContinuumConfig()) {
+    return null;
+  }
+
+  return createContinuumChatCompletion(
+    [
+      { role: "system", content: systemInstruction },
+      { role: "user", content: userPrompt },
+    ],
+    {
+      temperature: 0.4,
+      maxTokens: 800,
+      metadata: {
+        session_id: "flux-utility",
+        complexity: "simple",
+        domain: "general",
+      },
+    }
+  );
+}
 
 async function generateAudio(text: string): Promise<string | null> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -38,41 +124,6 @@ async function generateAudio(text: string): Promise<string | null> {
     console.error("[AI.Audio] Generation failed:", error);
     // Return silent MP3 on error to prevent frontend breakage
     return "data:audio/mp3;base64,SUQzBAAAAAAAI1RTSVMAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAAAA=";
-  }
-}
-
-async function generateImage(prompt: string): Promise<string | null> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
-  if (!apiKey) {
-    console.log("[AI.Image] Replicate key missing, skipping image generation.");
-    return null;
-  }
-
-  try {
-    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "Prefer": "wait"
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: `${prompt}, fantasy art style, cinematic lighting, highly detailed, 4k`,
-          aspect_ratio: "16:9",
-          go_fast: true
-        }
-      })
-    });
-
-    const result = await response.json();
-    if (result.output && Array.isArray(result.output) && result.output.length > 0) {
-      return result.output[0];
-    }
-    return null;
-  } catch (error) {
-    console.error("[AI.Image] Generation failed:", error);
-    return null;
   }
 }
 
@@ -116,22 +167,15 @@ function cleanJsonString(str: string): string {
 }
 
 export async function generateModeContent(mode: ModeId, topic: string, complexity: number, fileContent?: string, continueQuest?: { choice: string; previousStory: string; step: number }, tweak?: string): Promise<GenerationResult> {
-  const cerebrasKey = process.env.CEREBRAS_API_KEY;
-
-  const isMock = !cerebrasKey || cerebrasKey.startsWith("dummy_") || cerebrasKey === "" || cerebrasKey === "your-cerebras-api-key-here";
-
   console.log(`[AI.${mode}] fileContent received: ${fileContent ? fileContent.length : 0} chars`);
 
   try {
-    if (isMock) {
-      console.log(`[AI.${mode}] Using mock mode for ${mode} (Key missing or dummy)`);
+    if (!hasContinuumConfig()) {
+      console.log(`[AI.${mode}] Using mock mode for ${mode} (Continuum config missing or dummy)`);
       return generateMockContent(mode, topic, fileContent);
     }
 
-    console.log(`[AI.${mode}] Making API call to Cerebras...`);
-    const cerebras = new Cerebras({
-      apiKey: cerebrasKey
-    });
+    console.log(`[AI.${mode}] Making API call to Continuum Smart Inference...`);
 
     const complexityStr = complexity.toString();
     const tweakInstruction = tweak ? `\n\nCRITICAL USER REFINEMENT: The user has requested the following specific adjustment to this generation: "${tweak}". You MUST prioritize and apply this adjustment above all other formatting rules.` : "";
@@ -335,19 +379,21 @@ IMPORTANT: The "script" field should ONLY contain the spoken text to be fed into
         return { result: null, error: "Invalid mode" };
     }
 
-    const completion = await cerebras.chat.completions.create({
-      messages: [
+    const raw = await createContinuumChatCompletion(
+      [
         { role: "system", content: systemInstruction },
         { role: "user", content: `${contextBlock}${userPrompt}` }
       ],
-      model: 'llama3.1-8b',
-      max_completion_tokens: 8192,
-      temperature: 0.2,
-      top_p: 1,
-      stream: false
-    });
-
-    const raw = (completion as any).choices[0].message.content || "";
+      {
+        maxTokens: 8192,
+        temperature: 0.2,
+        metadata: {
+          session_id: `flux-${mode}-${topic.substring(0, 48)}`,
+          complexity: complexity >= 75 ? "complex" : complexity >= 35 ? "medium" : "simple",
+          domain: "general",
+        },
+      }
+    );
 
     console.log(`[AI.${mode}] API call completed, response length: ${raw.length} chars`);
 
@@ -376,14 +422,6 @@ IMPORTANT: The "script" field should ONLY contain the spoken text to be fed into
              }
           }
 
-          // Post-processing for Quest Image generation
-          if (mode === 'quest' && parsed.visual) {
-             console.log(`[AI.Quest] Generating image for scene: "${parsed.visual.substring(0, 30)}..."`);
-             const imageUrl = await generateImage(parsed.visual);
-             if (imageUrl) {
-               parsed.imageUrl = imageUrl;
-             }
-          }
           return { result: parsed };
         }
         return null;
@@ -489,12 +527,8 @@ function generateDefaultContent(mode: ModeId, topic: string): string | object {
 }
 
 export async function generateSessionTitleAI(extractedContent: string): Promise<string> {
-  const cerebrasKey = process.env.CEREBRAS_API_KEY;
-
-  const isMock = !cerebrasKey || cerebrasKey.startsWith("dummy_") || cerebrasKey === "" || cerebrasKey === "your-cerebras-api-key-here";
-
   try {
-    if (isMock) {
+    if (!hasContinuumConfig()) {
       // Generate a simple mock title based on content
       const content = extractedContent.trim();
       if (content.length > 50) {
@@ -513,10 +547,7 @@ export async function generateSessionTitleAI(extractedContent: string): Promise<
       return "Study Session";
     }
 
-    console.log(`[AI.Title] Making API call to Cerebras for session title...`);
-    const cerebras = new Cerebras({
-      apiKey: cerebrasKey
-    });
+    console.log(`[AI.Title] Making API call to Continuum for session title...`);
 
     const systemInstruction = `You are an expert at creating concise, descriptive titles for study sessions. Generate a short, engaging title (3-8 words) that captures the essence of the study material. The title should be descriptive and indicate what the session is about, similar to how ChatGPT names conversations.`;
 
@@ -526,20 +557,26 @@ ${extractedContent.substring(0, 5000)}
 
 Title:`;
 
-    const response = await cerebras.chat.completions.create({
-      model: "llama3.1-8b",
-      messages: [
+    const raw = await createContinuumChatCompletion(
+      [
         { role: "system", content: systemInstruction },
         { role: "user", content: userPrompt }
       ],
-      temperature: 0.7,
-      max_tokens: 50
-    });
+      {
+        temperature: 0.7,
+        maxTokens: 50,
+        metadata: {
+          session_id: "flux-title",
+          complexity: "simple",
+          domain: "general",
+        },
+      }
+    );
 
-    const raw = (response as any).choices[0]?.message?.content?.trim();
-    if (raw && raw.length > 0) {
+    const title = raw.trim();
+    if (title.length > 0) {
       // Clean up the response - remove quotes if present
-      const cleaned = raw.replace(/^["']|["']$/g, '').trim();
+      const cleaned = title.replace(/^["']|["']$/g, '').trim();
       if (cleaned.length > 0 && cleaned.length < 100) {
         return cleaned;
       }
@@ -564,35 +601,41 @@ async function generateMockContent(mode: ModeId, topic: string, fileContent?: st
     case 'notes':
       return { result: `### Notes on ${topic}\n\nThis is a highly structured set of notes ${contentSource}. \n\n#### Key Areas\n- **Concept 1**: Foundational principles.\n- **Concept 2**: Advanced applications.\n\n> 💡 Key Insight: Understanding ${topic} requires a holistic view of its components.\n\nSummary: Flux has synthesized this content for your learning journey in mock mode.` };
     case 'flashcards':
-      return { result: `1. **Front:** What is the primary goal of ${topic}?
-   **Back:** To provide a comprehensive framework for learning and understanding key concepts.
-
-2. **Front:** Who is the target audience for ${topic}?
-   **Back:** Students and lifelong learners using Flux to enhance their knowledge.
-
-3. **Front:** What are the main benefits of studying ${topic}?
-   **Back:** Improved understanding, better problem-solving skills, and practical application of concepts.
-
-4. **Front:** How does ${topic} relate to real-world applications?
-   **Back:** ${topic} provides foundational knowledge that can be applied to various real-world scenarios and challenges.` };
+      return { result: {
+        flashcards: [
+          { front: `What is the primary goal of ${topic}?`, back: "To provide a structured way to learn and understand key concepts." },
+          { front: `What source is this deck based on?`, back: contentSource },
+          { front: `Why study ${topic}?`, back: "It supports stronger understanding, recall, and practical application." },
+          { front: `How should ${topic} be reviewed?`, back: "Start with core ideas, test yourself, then revisit weak areas." }
+        ]
+      } };
     case 'quiz':
-      return { result: `1. **Question:** Which of these best describes ${topic}?
-   **Options:**
-   A) A comprehensive framework for learning
-   B) A simple concept with limited applications
-   C) An outdated approach to education
-   D) A purely theoretical subject
-   **Correct Answer:** A) A comprehensive framework for learning
-   **Explanation:** ${topic} provides a structured approach to understanding complex concepts and their applications.
-
-2. **Question:** What is the primary purpose of studying ${topic}?
-   **Options:**
-   A) To memorize facts without understanding
-   B) To develop critical thinking and problem-solving skills
-   C) To complete academic requirements only
-   D) To impress others with knowledge
-   **Correct Answer:** B) To develop critical thinking and problem-solving skills
-   **Explanation:** ${topic} helps build analytical skills and practical understanding beyond mere memorization.` };
+      return { result: {
+        quiz: [
+          {
+            question: `Which option best describes the purpose of studying ${topic}?`,
+            options: [
+              "To build understanding that can be applied later",
+              "To memorize unrelated details only",
+              "To avoid reviewing the source material",
+              "To replace practice with passive reading"
+            ],
+            answer_index: 0,
+            explanation: `${topic} is best learned by connecting key ideas to practical understanding.`
+          },
+          {
+            question: "What is the best next step after reading generated notes?",
+            options: [
+              "Close the material immediately",
+              "Use flashcards and quizzes to check recall",
+              "Ignore unclear sections",
+              "Only reread the title"
+            ],
+            answer_index: 1,
+            explanation: "Active recall helps reveal what you understand and what needs review."
+          }
+        ]
+      } };
     case 'quest':
       return { result: {
         story: `You arrive at the Temple of ${topic}, a magnificent structure built from knowledge and wisdom. Ancient runes glow on the walls, each representing a key concept from the source material. A wise sage approaches you, their eyes sparkling with the light of understanding.
