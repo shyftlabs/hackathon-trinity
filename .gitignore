@@ -56,3 +56,6 @@ dev.db
 
 .venv/
 continuum/
+
+*.log
+*.err
