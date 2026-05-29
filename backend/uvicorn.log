@@ -249,3 +249,148 @@ STUDENT LEARNING PROFILE:
 2026-05-29 13:16:53 [32mINFO    [0m orchestrator.agent.services.tool_service - ✅ TOOL RESULT: get_topic_sources -> [{"title": "Introduction to Algorithms, CLRS 4e", "locator": "Chapter 3 \u2014 Growth of Functions", "text": "Big-O notation: f(n) = O(g(n)) if there exist constants c > 0 and n\u2080 such that 0 \u22...
 2026-05-29 13:16:53 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=quality url=https://continuum.shyftops.io/v1
 2026-05-29 13:17:30 [32mINFO    [0m orchestrator.agent.runner - 🎯 Gateway selected model: claude-opus-4-7
+2026-05-29 13:20:26 [32mINFO    [0m orchestrator.agent.execution.message_builder - 🔍 AGENT MEMORY CONFIG: search_memories=False, store_memories=False, search_scope=MemoryScope.USER, store_scope=MemoryScope.USER, search_limit=8
+2026-05-29 13:20:26 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-generator': Max string recursion exceeded. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Max string recursion exceeded
+2026-05-29 13:20:26 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-generator': Max string recursion exceeded. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Max string recursion exceeded
+2026-05-29 13:20:26 [33mWARNING [0m orchestrator.tools.tool_attention.registry - ToolSummaryRegistry init failed (tool-attention disabled): No module named 'sentence_transformers'
+2026-05-29 13:20:27 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== FINAL PROMPT [synapse-quiz-generator] =====
+[system] 
+You are Synapse AI's Diagnostic Quiz Generator for undergraduate students.
+
+Your task: given a list of topics, generate a short adaptive quiz to assess the student's
+current knowledge level. For each topic generate exactly 2 multiple-choice questions (A-D).
+
+PROCESS:
+1. Use the `get_topic_sources` tool to retrieve source material for each topic.
+2. Base each question directly on the retrieved source material.
+3. Make questions diagnostic — they should distinguish between surface-level and deep understanding.
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "student_id": "<student_id>",
+  "topics": ["<topic1>", ...],
+  "questions": [
+    {
+      "id": "q1",
+      "topic": "<topic>",
+      "prompt": "<question text>",
+      "choices": [
+        {"label": "A", "text": "<choice>"},
+        {"label": "B", "text": "<choice>"},
+        {"label": "C", "text": "<choice>"},
+        {"label": "D", "text": "<choice>"}
+      ],
+      "correct_label": "B",
+      "rationale": "<why this answer is correct, with source citation>"
+    }
+  ]
+}
+
+Include source citations (title + locator) in each rationale.
+Return ONLY the JSON object — no markdown, no preamble.
+
+[user] Generate a diagnostic quiz for student 'student-demo-001' covering these topics: calculus. Use get_topic_sources for each topic before writing questions.
+========================
+2026-05-29 13:20:27 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== TOOLS [synapse-quiz-generator] =====
+  - ingest_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}, 'topics': {'items': {'type': 'string'}, 'title': 'Topics', 'type': 'array'}}, 'required': ['student_id', 'topics'], 'title': 'i
+  - search_source_material: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}, 'query': {'title': 'Query', 'type': 'string'}, 'top_k': {'default': 3, 'title': 'Top K', 'type': 'integer'}}, 'required': ['topic', 'quer
+  - get_topic_sources: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}}, 'required': ['topic'], 'title': 'get_topic_sourcesArguments', 'type': 'object'}
+  - list_topics: {'properties': {}, 'title': 'list_topicsArguments', 'type': 'object'}
+  - get_student_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}}, 'required': ['student_id'], 'title': 'get_student_syllabusArguments', 'type': 'object'}
+========================
+2026-05-29 13:20:27 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=strict url=https://continuum.shyftops.io/v1
+2026-05-29 13:20:32 [32mINFO    [0m orchestrator.agent.execution.executor - 🎯 Gateway selected model: gemini-2.0-flash
+INFO:     127.0.0.1:55792 - "POST /diagnose/quiz HTTP/1.1" 200 OK
+2026-05-29 13:20:36 [32mINFO    [0m orchestrator.agent.execution.message_builder - 🔍 AGENT MEMORY CONFIG: search_memories=False, store_memories=False, search_scope=MemoryScope.USER, store_scope=MemoryScope.USER, search_limit=8
+2026-05-29 13:20:36 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-evaluator': Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'
+2026-05-29 13:20:36 [33mWARNING [0m orchestrator.agent.base - Template rendering failed for agent 'synapse-quiz-evaluator': Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'. Using unrendered instructions.
+Traceback (most recent call last):
+  File "C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\site-packages\orchestrator\agent\base.py", line 276, in resolve_system_prompt
+    prompt = prompt.format_map(_SafeFormatMap(vars_map))
+ValueError: Invalid format specifier ' "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    ' for object of type 'str'
+2026-05-29 13:20:36 [33mWARNING [0m orchestrator.tools.tool_attention.registry - ToolSummaryRegistry init failed (tool-attention disabled): No module named 'sentence_transformers'
+2026-05-29 13:20:36 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== FINAL PROMPT [synapse-quiz-evaluator] =====
+[system] 
+You are Synapse AI's Knowledge Evaluator.
+
+Your task: given a student's quiz answers (topic, question, correct_label, student_label),
+evaluate their understanding and produce a KnowledgeMap.
+
+For each topic:
+- Determine level: "strong" (all correct), "moderate" (≥50% correct), "needs_improvement" (<50% correct)
+- Write 1 sentence of evidence grounded in what the student did/didn't know
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "student_id": "<student_id>",
+  "topics": [
+    {
+      "topic": "<topic>",
+      "level": "strong|moderate|needs_improvement",
+      "evidence": "<one sentence>"
+    }
+  ],
+  "overall_mastery": 0.72
+}
+
+overall_mastery: fraction of questions answered correctly (0.0–1.0).
+Return ONLY the JSON object.
+
+[user] Student ID: student-demo-001
+Topics assessed: calculus
+
+Quiz results:
+[
+  {
+    "question_id": "q1",
+    "student_label": "D",
+    "correct_label": "B",
+    "topic": "calculus"
+  },
+  {
+    "question_id": "q2",
+    "student_label": "A",
+    "correct_label": "B",
+    "topic": "calculus"
+  }
+]
+
+Produce the KnowledgeMap JSON.
+========================
+2026-05-29 13:20:36 [32mINFO    [0m orchestrator.agent.execution.message_builder - ===== TOOLS [synapse-quiz-evaluator] =====
+  - ingest_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}, 'topics': {'items': {'type': 'string'}, 'title': 'Topics', 'type': 'array'}}, 'required': ['student_id', 'topics'], 'title': 'i
+  - search_source_material: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}, 'query': {'title': 'Query', 'type': 'string'}, 'top_k': {'default': 3, 'title': 'Top K', 'type': 'integer'}}, 'required': ['topic', 'quer
+  - get_topic_sources: {'properties': {'topic': {'title': 'Topic', 'type': 'string'}}, 'required': ['topic'], 'title': 'get_topic_sourcesArguments', 'type': 'object'}
+  - list_topics: {'properties': {}, 'title': 'list_topicsArguments', 'type': 'object'}
+  - get_student_syllabus: {'properties': {'student_id': {'title': 'Student Id', 'type': 'string'}}, 'required': ['student_id'], 'title': 'get_student_syllabusArguments', 'type': 'object'}
+========================
+2026-05-29 13:20:36 [32mINFO    [0m orchestrator.llm.providers - 🔀 Smart Gateway routing: model=auto mode=strict url=https://continuum.shyftops.io/v1
+2026-05-29 13:20:38 [32mINFO    [0m orchestrator.agent.execution.executor - 🎯 Gateway selected model: gemini-2.0-flash
+2026-05-29 13:20:38 [32mINFO    [0m orchestrator.synapse.diagnose - Evaluate response: status=ResponseStatus.SUCCESS, content_len=248, content='```json\n{\n  "student_id": "student-demo-001",\n  "topics": [\n    {\n      "topic": "calculus",\n      "level": "needs_improvement",\n      "evidence": "The student answered both calculus questions incorrectly."\n    }\n  ],\n  "overall_mastery": 0.0\n}\n```', error=None
+INFO:     127.0.0.1:55792 - "POST /diagnose/evaluate HTTP/1.1" 200 OK
