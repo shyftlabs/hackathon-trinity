@@ -5,6 +5,18 @@ import { parseFile } from "@/lib/fileParser";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+function parseJsonField<T>(value: string | null, fieldName: string, sessionId: string): T | null {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value);
+    return parsed as T;
+  } catch (error) {
+    console.warn(`Ignoring malformed ${fieldName} for session ${sessionId}:`, error);
+    return null;
+  }
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -55,31 +67,11 @@ export async function GET(
     }
 
     // Safely parse JSON fields with error handling
-    if (session.flashcards) {
-      try {
-        formattedSession.flashcards = JSON.parse(session.flashcards);
-      } catch (e) {
-        console.error(`Failed to parse flashcards for session ${resolvedParams.id}:`, e);
-        formattedSession.flashcards = session.flashcards; // Return raw if parsing fails
-      }
-    }
-
-    if (session.quiz) {
-      try {
-        formattedSession.quiz = JSON.parse(session.quiz);
-      } catch (e) {
-        console.error(`Failed to parse quiz for session ${resolvedParams.id}:`, e);
-        formattedSession.quiz = session.quiz;
-      }
-    }
+    formattedSession.flashcards = parseJsonField(session.flashcards, "flashcards", resolvedParams.id);
+    formattedSession.quiz = parseJsonField(session.quiz, "quiz", resolvedParams.id);
 
     if (session.quest) {
-      try {
-        formattedSession.quest = JSON.parse(session.quest);
-      } catch (e) {
-        console.error(`Failed to parse quest for session ${resolvedParams.id}:`, e);
-        formattedSession.quest = session.quest;
-      }
+      formattedSession.quest = parseJsonField(session.quest, "quest", resolvedParams.id);
     }
 
     if (session.podcast) {

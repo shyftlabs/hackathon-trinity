@@ -48,7 +48,7 @@ Key capabilities:
   - Create sessions (`/api/sessions` POST)
   - List sessions (`/api/sessions` GET)
   - Delete one/all sessions (`/api/sessions/[id]` and DELETE)
-- Optional image generation (Replicate/Pollinations)
+- Continuum-backed study content generation
 
 ---
 
@@ -59,7 +59,7 @@ Key capabilities:
 - TypeScript
 - Prisma (SQLite by default)
 - Zustand (state store)
-- Cerebras SDK (LLM), ElevenLabs (TTS)
+- Continuum Smart Inference (LLM), ElevenLabs (TTS)
 - Tailwind CSS v4 + shadcn components
 
 ---
@@ -86,7 +86,7 @@ npm install
 cp .env.local.example .env.local
 ```
 
-4. Update environment variables (set at least `DATABASE_URL`, `CEREBRAS_API_KEY`, `ELEVENLABS_API_KEY` for full behavior)
+4. Update environment variables (set at least `DATABASE_URL`, `SMART_GATEWAY_URL`, `SMART_GATEWAY_API_KEY`, `ELEVENLABS_API_KEY` for full behavior)
 
 5. Run Prisma migrations
 
@@ -109,11 +109,10 @@ npm run dev
 Add these to `.env.local`:
 
 - `DATABASE_URL` (e.g. `file:./prisma/dev.db`)
-- `CEREBRAS_API_KEY` (Flux AI reasoning/generation)
+- `SMART_GATEWAY_URL` (Continuum Smart Inference endpoint, for example `http://localhost:8787/v1`)
+- `SMART_GATEWAY_API_KEY` (Continuum Smart Inference API key)
+- `CONTINUUM_MODEL` (optional, defaults to `auto`)
 - `ELEVENLABS_API_KEY` (audio synthesis)
-- `REPLICATE_API_TOKEN` (optional images)
-- `OPENAI_API_KEY` (fallback/extra features)
-- `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT` (if vector search is enabled)
 
 > The existing `.env.local` in repository has placeholders and sample values, but please do not commit real secrets.
 
