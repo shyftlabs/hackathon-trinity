@@ -12,9 +12,44 @@ model User {
   id        String    @id @default(cuid())
   email     String    @unique
   name      String?
+  role      String    @default("student") // "student" or "teacher"
   sessions  Session[]
+  classes   Class[]    @relation("TeacherClasses")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model Class {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  subject         String?
+  teacherId       String
+  teacher         User     @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  description     String?
+  
+  // Active session for this class (teacher can update this)
+  activeSessionId String?   @unique
+  activeSession   Session?   @relation("ClassActiveSession", fields: [activeSessionId], references: [id], onDelete: SetNull)
+  
+  // History of sessions used in this class
+  classSessions   ClassSession[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ClassSession {
+  id        String   @id @default(cuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   Session  @relation("ClassSessions", fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Track when this session was added to the class
+  addedAt   DateTime @default(now())
+  
+  @@unique([classId, sessionId])
 }
 
 model Session {
@@ -51,6 +86,10 @@ model Session {
 
   userId      String?
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations for class usage
+  classActive Class?   @relation("ClassActiveSession")
+  classSessions ClassSession[] @relation("ClassSessions")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

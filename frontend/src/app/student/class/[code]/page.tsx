@@ -1,15 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight, BookOpenText, ChevronRight, FileText, Layers,
-  Network, Volume2, Zap, CheckSquare, RotateCcw, Send, Trophy, X
+  Network, Volume2, Zap, CheckSquare, RotateCcw, Send, Trophy, X, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  MOCK_CLASS, MOCK_NOTES, MOCK_FLASHCARDS, MOCK_VISUAL
-} from "@/lib/mockData";
+import { MOCK_CLASS, MOCK_NOTES, MOCK_FLASHCARDS, MOCK_VISUAL } from "@/lib/mockData";
+import { useSyncClass } from "@/lib/useSyncClass";
 
 type Mode = "notes" | "flashcards" | "podcast" | "visual";
 
