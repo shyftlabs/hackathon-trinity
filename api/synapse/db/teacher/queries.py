@@ -59,10 +59,24 @@ async def get_teacher_by_email(email: str) -> dict | None:
 
 # ── Classrooms ────────────────────────────────────────────────────────────────
 
+async def _unique_join_code(client) -> str:
+    """Generate a short join code not yet used by any classroom."""
+    from synapse.models import new_join_code
+    for _ in range(12):
+        code = new_join_code()
+        existing = client.table("classrooms").select("id").eq("join_code", code).limit(1).execute()
+        if not existing.data:
+            return code
+    raise RuntimeError("Unable to allocate unique classroom join code")
+
+
 async def create_classroom(classroom: Classroom) -> dict:
     client = get_client()
-    result = client.table("classrooms").insert(classroom.model_dump()).execute()
-    return result.data[0] if result.data else {}
+    payload = classroom.model_dump()
+    # Always assign a server-verified unique join code so students can join.
+    payload["join_code"] = await _unique_join_code(client)
+    result = client.table("classrooms").insert(payload).execute()
+    return result.data[0] if result.data else payload
 
 
 async def get_classroom(classroom_id: str) -> dict | None:

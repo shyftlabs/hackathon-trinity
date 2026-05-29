@@ -13,9 +13,11 @@ from synapse.models import KnowledgeMap, Assessment, GradeReport, SmartNotes
 
 async def upsert_student(student_id: str, email: str = "", name: str = "") -> dict:
     client = get_client()
+    # email is UNIQUE: store NULL (not "") for empties so multiple anonymous
+    # students don't collide on the empty string.
     result = client.table("students").upsert({
         "id": student_id,
-        "email": email,
+        "email": email or None,
         "name": name,
     }).execute()
     return result.data[0] if result.data else {}

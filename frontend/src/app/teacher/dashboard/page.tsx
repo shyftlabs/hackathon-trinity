@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   BookOpenText, Check, ChevronDown, ChevronUp, Copy, FileText, GraduationCap,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_STUDENTS, MOCK_CLASS, MOCK_CLASS_STATS, type MockStudent } from "@/lib/mockData";
+import { teacherApi } from "@/lib/synapseApi";
 
 const STUDY_MODES = [
   { id: "notes", icon: FileText, label: "Notes", desc: "Structured AI-written notes" },
@@ -149,6 +150,43 @@ export default function TeacherDashboard() {
   const [topic, setTopic] = useState("Photosynthesis & the Light-Dependent Reactions");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Live class created via the teacher entry flow (falls back to mock for the demo).
+  const [liveClass, setLiveClass] = useState<{ id: string; name: string; join_code: string; topics: string[] } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("synapse_class");
+      if (raw) setLiveClass(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+  const classCode = liveClass?.join_code ?? MOCK_CLASS.code;
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+
+  // Republish: derive class topics from the uploaded material via the AI agent,
+  // persist them as the syllabus, and reflect them locally for students.
+  const handlePublish = async () => {
+    if (!liveClass?.id) { setPublished((v) => !v); return; }
+    setPublishing(true);
+    setPublishError("");
+    try {
+      const teacherId = localStorage.getItem("synapse_teacher_id") ?? liveClass.id;
+      const { topics } = await teacherApi.publishMaterials(
+        liveClass.id,
+        teacherId,
+        topic,
+        attachedFiles.map((f) => f.name),
+      );
+      const next = { ...liveClass, topics };
+      setLiveClass(next);
+      localStorage.setItem("synapse_class", JSON.stringify(next));
+      setPublished(true);
+    } catch {
+      setPublishError("Couldn't update topics — is the API running on port 8000?");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const toggleMode = (id: string) => {
     setEnabledModes((prev) =>
       prev.includes(id) && prev.length > 1 ? prev.filter((m) => m !== id) : prev.includes(id) ? prev : [...prev, id]
@@ -169,7 +207,7 @@ export default function TeacherDashboard() {
   };
 
   const copyCode = () => {
-    navigator.clipboard.writeText(MOCK_CLASS.code);
+    navigator.clipboard.writeText(classCode);
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 1800);
   };
@@ -232,7 +270,7 @@ export default function TeacherDashboard() {
               onClick={copyCode}
               className="flex items-center gap-2 rounded-full border border-[#1d1d1f]/10 bg-white/70 px-3 py-1.5 text-[13px] font-medium text-[#424245] transition hover:bg-white active:scale-[0.97]"
             >
-              <span className="font-mono text-[#0066cc]">{MOCK_CLASS.code}</span>
+              <span className="font-mono text-[#0066cc]">{classCode}</span>
               {codeCopied ? <Check className="size-3.5 text-[#10b981]" strokeWidth={2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
             </button>
             <div className="flex size-8 items-center justify-center rounded-full border border-[#0066cc]/20 bg-[#0066cc]/10 text-[13px] font-semibold text-[#0066cc]">
@@ -371,19 +409,36 @@ export default function TeacherDashboard() {
                     </button>
                   </div>
                   <button
-                    onClick={() => setPublished((v) => !v)}
-                    className="flex h-10 items-center gap-2 rounded-full bg-[#0066cc] px-5 text-[14px] font-medium text-white transition-all duration-150 hover:bg-[#0071e3] active:scale-[0.97]"
+                    onClick={handlePublish}
+                    disabled={publishing}
+                    className="flex h-10 items-center gap-2 rounded-full bg-[#0066cc] px-5 text-[14px] font-medium text-white transition-all duration-150 hover:bg-[#0071e3] active:scale-[0.97] disabled:opacity-60"
                   >
-                    <Sparkles className="size-3.5" strokeWidth={1.8} />
-                    {published ? "Republish" : "Publish to students"}
+                    {publishing
+                      ? <div className="size-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      : <Sparkles className="size-3.5" strokeWidth={1.8} />}
+                    {publishing ? "Analyzing material…" : published ? "Republish" : "Publish to students"}
                   </button>
                 </div>
+
+                {publishError && <p className="mt-2 text-[12px] text-red-500">{publishError}</p>}
+
+                {/* AI-derived topics students will study */}
+                {liveClass?.topics && liveClass.topics.length > 0 && (
+                  <div className="mt-4 rounded-[16px] border border-[#1d1d1f]/8 bg-white/50 px-4 py-3">
+                    <p className="text-[11px] font-medium uppercase tracking-widest text-[#86868b]">Topics from your material</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {liveClass.topics.map((t) => (
+                        <span key={t} className="rounded-full border border-[#0066cc]/20 bg-[#0066cc]/8 px-2.5 py-1 text-[12px] font-medium text-[#0066cc]">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Class code display */}
                 <div className="mt-4 flex items-center justify-between rounded-[16px] border border-[#1d1d1f]/8 bg-white/50 px-4 py-3">
                   <div>
                     <p className="text-[11px] font-medium uppercase tracking-widest text-[#86868b]">Student class code</p>
-                    <p className="mt-0.5 font-mono text-[22px] font-semibold tracking-wider text-[#0066cc]">{MOCK_CLASS.code}</p>
+                    <p className="mt-0.5 font-mono text-[22px] font-semibold tracking-wider text-[#0066cc]">{classCode}</p>
                   </div>
                   <button
                     onClick={copyCode}

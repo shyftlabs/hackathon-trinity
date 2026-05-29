@@ -5,16 +5,45 @@ import { ArrowRight, Zap, GraduationCap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
+import { teacherApi, type ClassroomInfo } from "@/lib/synapseApi";
+
+const DEMO_TOPICS = ["Calculus", "Linear Algebra", "Data Structures", "Statistics", "Python Programming", "Physics"];
 
 export default function TeacherPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Register the teacher, ensure they have a class with a real join code, and
+  // stash it so the dashboard can show the live code students join with.
+  const enterClassroom = async () => {
+    setLoading(true);
+    try {
+      const handle = (email || "demo").split("@")[0].replace(/[^a-zA-Z0-9_-]/g, "") || "demo";
+      const teacherId = localStorage.getItem("synapse_teacher_id") ?? `teacher-${handle}`;
+      localStorage.setItem("synapse_teacher_id", teacherId);
+      await teacherApi.register(teacherId, email || `${teacherId}@synapse.ai`, "Teacher");
+
+      const { classrooms } = await teacherApi.listClasses(teacherId);
+      let cls = classrooms?.[0] as ClassroomInfo & { id: string; join_code: string };
+      if (!cls) {
+        cls = (await teacherApi.createClass(teacherId, "My Classroom", "AI-personalized study", DEMO_TOPICS)) as typeof cls;
+      }
+      localStorage.setItem("synapse_class", JSON.stringify({
+        id: cls.id ?? (cls as { classroom_id?: string }).classroom_id,
+        name: cls.name,
+        join_code: cls.join_code,
+        topics: cls.topics,
+      }));
+    } catch {
+      // Fall back to the mock dashboard if the API is unreachable.
+    }
+    router.push("/teacher/dashboard");
+  };
+
   const handleEnter = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => router.push("/teacher/dashboard"), 600);
+    void enterClassroom();
   };
 
   return (
@@ -82,7 +111,7 @@ export default function TeacherPage() {
               <div className="mt-5 text-center text-[13px] text-[#86868b]">
                 For the demo, any credentials work.{" "}
                 <button
-                  onClick={() => { setLoading(true); setTimeout(() => router.push("/teacher/dashboard"), 400); }}
+                  onClick={() => void enterClassroom()}
                   className="text-[#0066cc] transition hover:underline"
                 >
                   Skip to dashboard →

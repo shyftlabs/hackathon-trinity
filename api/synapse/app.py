@@ -29,6 +29,7 @@ from synapse.routers.student import (
     classes as student_classes,
     flashcards as student_flashcards,
     pipeline as student_pipeline,
+    media as student_media,
 )
 
 # ── Teacher routers (teacher developer owns these) ────────────────────────────
@@ -70,6 +71,7 @@ app.include_router(student_auth.router)
 app.include_router(student_classes.router)
 app.include_router(student_flashcards.router)
 app.include_router(student_pipeline.router)
+app.include_router(student_media.router)
 
 # ── Mount teacher routes (/teacher/...) ───────────────────────────────────────
 app.include_router(teacher_auth.router)

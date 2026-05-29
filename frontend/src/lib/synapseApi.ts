@@ -109,6 +109,26 @@ export interface GradeReport {
   updated_status: TopicStatus;
 }
 
+export interface AudioSummary {
+  topic: string;
+  student_id: string;
+  title: string;
+  script: string;
+  duration_estimate: string;
+}
+
+export interface MindMapBranch {
+  title: string;
+  children: string[];
+}
+
+export interface MindMap {
+  topic: string;
+  student_id: string;
+  summary: string;
+  branches: MindMapBranch[];
+}
+
 export interface LearningProfile {
   modality: "visual" | "text" | "audio";
   pace: "deep" | "methodical";
@@ -192,7 +212,13 @@ export const studentApi = {
   // ── Assessment ───────────────────────────────────────────────────────────────
 
   createAssessment: (studentId: string, topic: string) =>
-    get<Assessment>(`/student/assess/${encodeURIComponent(topic)}?student_id=${studentId}`),
+    post<Assessment>(`/student/assess/${encodeURIComponent(topic)}?student_id=${studentId}`, {}),
+
+  generateAudio: (studentId: string, topic: string) =>
+    post<AudioSummary>("/student/audio/", { student_id: studentId, topic }),
+
+  generateMindMap: (studentId: string, topic: string) =>
+    post<MindMap>("/student/mindmap/", { student_id: studentId, topic }),
 
   gradeAssessment: (assessmentId: string, studentId: string, topic: string, answers: { question_id: string; response: string }[]) =>
     post<GradeReport>("/student/assess/grade", {
@@ -275,6 +301,14 @@ export const teacherApi = {
       teacher_id: teacherId,
       topics,
       description,
+    }),
+
+  // AI-derive class topics from uploaded lecture material and publish them.
+  publishMaterials: (classroomId: string, teacherId: string, about: string, materials: string[]) =>
+    post<{ classroom_id: string; topics: string[] }>(`/teacher/classes/${classroomId}/publish`, {
+      teacher_id: teacherId,
+      about,
+      materials,
     }),
 
   enrollStudent: (classroomId: string, studentId: string) =>

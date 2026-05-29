@@ -7,7 +7,7 @@ import {
   Network, Volume2, Zap, CheckSquare, RotateCcw, Send, Trophy, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { studentApi, type SmartNotes, type Flashcard, type LearningProfile } from "@/lib/synapseApi";
+import { studentApi, type SmartNotes, type Flashcard, type LearningProfile, type AudioSummary, type MindMap } from "@/lib/synapseApi";
 
 const DEMO_STUDENT_ID = "demo-student-001";
 const getStudentId = () =>
@@ -105,6 +105,104 @@ function CheckPopup({ check, onDismiss }: { check: { question: string; hint: str
   );
 }
 
+// ── Audio summary view (Web Speech API playback) ─────────────────────────────
+function AudioView({ audio, loading }: { audio: AudioSummary | null; loading: boolean }) {
+  const [speaking, setSpeaking] = useState(false);
+  const [supported, setSupported] = useState(true);
+
+  useEffect(() => {
+    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    return () => { if (typeof window !== "undefined") window.speechSynthesis?.cancel(); };
+  }, []);
+
+  // Stop narration if the script changes (new topic).
+  useEffect(() => {
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    setSpeaking(false);
+  }, [audio?.script]);
+
+  const toggle = () => {
+    if (!audio?.script) return;
+    const synth = window.speechSynthesis;
+    if (speaking) { synth.cancel(); setSpeaking(false); return; }
+    const u = new SpeechSynthesisUtterance(audio.script);
+    u.rate = 1.0;
+    u.onend = () => setSpeaking(false);
+    u.onerror = () => setSpeaking(false);
+    synth.cancel();
+    synth.speak(u);
+    setSpeaking(true);
+  };
+
+  if (loading || !audio) return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="mb-3 size-10 animate-spin rounded-full border-2 border-[#10b981]/20 border-t-[#10b981]" />
+      <p className="text-[14px] text-[#6e6e73]">Generating audio summary…</p>
+    </div>
+  );
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="flex flex-col items-center text-center">
+        <button
+          onClick={toggle}
+          disabled={!supported}
+          className="mb-5 flex size-20 items-center justify-center rounded-full border border-[#10b981]/25 bg-[#10b981]/10 text-[#10b981] transition hover:bg-[#10b981]/16 active:scale-95 disabled:opacity-50"
+        >
+          {speaking
+            ? <span className="block h-7 w-7 rounded-[6px] bg-[#10b981]" />
+            : <Volume2 className="size-9" strokeWidth={1.6} />}
+        </button>
+        <h3 className="text-[22px] font-semibold tracking-[-0.02em]">{audio.title || "Audio Summary"}</h3>
+        <p className="mt-1 text-[13px] text-[#86868b]">
+          {audio.duration_estimate || "~3 min"} · {speaking ? "Playing — tap to stop" : supported ? "Tap to listen" : "Audio not supported in this browser"}
+        </p>
+      </div>
+      <div className="mt-7 rounded-[20px] border border-[#1d1d1f]/8 bg-white p-5">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">Transcript</p>
+        <p className="whitespace-pre-wrap text-[15px] leading-7 text-[#424245]">{audio.script}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Mind map view ─────────────────────────────────────────────────────────────
+function MindMapView({ mindmap, loading }: { mindmap: MindMap | null; loading: boolean }) {
+  const palette = ["#0066cc", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
+  if (loading || !mindmap) return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="mb-3 size-10 animate-spin rounded-full border-2 border-[#f59e0b]/20 border-t-[#f59e0b]" />
+      <p className="text-[14px] text-[#6e6e73]">Building knowledge map…</p>
+    </div>
+  );
+  return (
+    <div>
+      <div className="mb-6 text-center">
+        <span className="inline-block rounded-full bg-[#1d1d1f] px-5 py-2 text-[16px] font-semibold text-white">{mindmap.topic}</span>
+        {mindmap.summary && <p className="mx-auto mt-3 max-w-[48ch] text-[14px] text-[#6e6e73]">{mindmap.summary}</p>}
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {mindmap.branches.map((b, i) => {
+          const color = palette[i % palette.length];
+          return (
+            <div key={i} className="rounded-[20px] border bg-white p-4" style={{ borderColor: `${color}33` }}>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="size-2.5 rounded-full" style={{ background: color }} />
+                <p className="text-[15px] font-semibold" style={{ color }}>{b.title}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {b.children.map((c, j) => (
+                  <span key={j} className="rounded-full border px-2.5 py-1 text-[12px] text-[#424245]" style={{ borderColor: `${color}33`, background: `${color}0d` }}>{c}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function StudentClassPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -123,6 +221,10 @@ export default function StudentClassPage({ params }: { params: Promise<{ code: s
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [flashcardsLoading, setFlashcardsLoading] = useState(false);
+  const [audio, setAudio] = useState<AudioSummary | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [mindmap, setMindmap] = useState<MindMap | null>(null);
+  const [mindmapLoading, setMindmapLoading] = useState(false);
 
   // Chat
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string; check?: { question: string; hint: string } }[]>([]);
@@ -145,6 +247,10 @@ export default function StudentClassPage({ params }: { params: Promise<{ code: s
   const triggerMaterialGeneration = useCallback(async (topic: string) => {
     setNotesLoading(true);
     setFlashcardsLoading(true);
+    // New topic → clear audio/mind map so they regenerate on demand.
+    setAudio(null);
+    setMindmap(null);
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
 
     // Fire scatter pipeline (notes + flashcards in parallel via ScatterAgent)
     studentApi.generateMaterials(studentId.current, [topic]).catch(console.error);
@@ -159,13 +265,32 @@ export default function StudentClassPage({ params }: { params: Promise<{ code: s
       .catch(() => setFlashcardsLoading(false));
   }, []);
 
-  const handleSend = useCallback(async (text?: string) => {
+  // Lazy-load audio / mind map the first time the student opens that mode.
+  useEffect(() => {
+    if (!studyStarted || !currentTopic) return;
+    if (activeMode === "podcast" && !audio && !audioLoading) {
+      setAudioLoading(true);
+      studentApi.generateAudio(studentId.current, currentTopic)
+        .then(a => setAudio(a))
+        .catch(() => setAudio(null))
+        .finally(() => setAudioLoading(false));
+    }
+    if (activeMode === "visual" && !mindmap && !mindmapLoading) {
+      setMindmapLoading(true);
+      studentApi.generateMindMap(studentId.current, currentTopic)
+        .then(m => setMindmap(m))
+        .catch(() => setMindmap(null))
+        .finally(() => setMindmapLoading(false));
+    }
+  }, [activeMode, studyStarted, currentTopic, audio, audioLoading, mindmap, mindmapLoading]);
+
+  const handleSend = useCallback(async (text?: string, explicitTopic?: string) => {
     const msg = (text ?? chatInput).trim();
     if (!msg || generating) return;
     setChatInput("");
 
-    const topic = currentTopic || msg;
-    if (!currentTopic) setCurrentTopic(topic);
+    const topic = explicitTopic || currentTopic || msg;
+    if (explicitTopic || !currentTopic) setCurrentTopic(topic);
 
     setChatMessages(prev => [...prev, { role: "user", text: msg }]);
     setGenerating(true);
@@ -283,7 +408,7 @@ export default function StudentClassPage({ params }: { params: Promise<{ code: s
               {classInfo.topics.map((t) => (
                 <button
                   key={t}
-                  onClick={() => handleSend(`Teach me about: ${t}`)}
+                  onClick={() => handleSend(`Teach me about: ${t}`, t)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-left text-[13px] transition-all hover:bg-[#1d1d1f]/5",
                     currentTopic === t ? "font-semibold text-[#0066cc]" : "text-[#424245]"
@@ -379,21 +504,8 @@ export default function StudentClassPage({ params }: { params: Promise<{ code: s
                 <div className="mx-auto max-w-3xl">
                   {activeMode === "notes" && <NotesView notes={notes} loading={notesLoading} />}
                   {activeMode === "flashcards" && <FlashcardsView cards={flashcards} loading={flashcardsLoading} />}
-                  {activeMode === "podcast" && (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="mb-6 flex size-20 items-center justify-center rounded-full border border-[#10b981]/20 bg-[#10b981]/8">
-                        <Volume2 className="size-9 text-[#10b981]" strokeWidth={1.5} />
-                      </div>
-                      <h3 className="text-[22px] font-semibold tracking-[-0.02em]">Audio Summary</h3>
-                      <p className="mt-2 max-w-[32ch] text-[15px] text-[#6e6e73]">Audio generation coming soon.</p>
-                    </div>
-                  )}
-                  {activeMode === "visual" && (
-                    <div>
-                      <h3 className="mb-4 text-[20px] font-semibold tracking-[-0.02em]">Knowledge Map</h3>
-                      <p className="text-[14px] text-[#6e6e73]">Visual knowledge map for {currentTopic}.</p>
-                    </div>
-                  )}
+                  {activeMode === "podcast" && <AudioView audio={audio} loading={audioLoading} />}
+                  {activeMode === "visual" && <MindMapView mindmap={mindmap} loading={mindmapLoading} />}
                 </div>
               </div>
 

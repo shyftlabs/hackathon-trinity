@@ -14,6 +14,13 @@ def new_id() -> str:
     return str(uuid.uuid4())
 
 
+def new_join_code(length: int = 6) -> str:
+    """Short, human-typable, uppercase class join code (e.g. 'K7P2QX')."""
+    import secrets, string
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
 # ── Source material ────────────────────────────────────────────────────────────
 
 class SourceChunk(BaseModel):
@@ -137,6 +144,30 @@ class SmartNotes(BaseModel):
     sections: list[NoteSection]
     key_concepts: list[str]
     sources: list[SourceChunk] = Field(default_factory=list)
+
+
+# ── Audio summary ───────────────────────────────────────────────────────────────
+
+class AudioSummary(BaseModel):
+    topic: str
+    student_id: str
+    title: str = ""
+    script: str          # narration text, spoken client-side via Web Speech API
+    duration_estimate: str = ""   # e.g. "~3 min"
+
+
+# ── Mind map ──────────────────────────────────────────────────────────────────
+
+class MindMapBranch(BaseModel):
+    title: str
+    children: list[str] = Field(default_factory=list)
+
+
+class MindMap(BaseModel):
+    topic: str
+    student_id: str
+    summary: str = ""
+    branches: list[MindMapBranch] = Field(default_factory=list)
 
 
 # ── API request shapes ─────────────────────────────────────────────────────────
@@ -268,6 +299,7 @@ class Classroom(BaseModel):
     name: str
     description: str = ""
     topics: list[str] = Field(default_factory=list)
+    join_code: str = Field(default_factory=new_join_code)
 
 
 class Enrollment(BaseModel):
@@ -287,6 +319,13 @@ class SyllabusUpload(BaseModel):
     teacher_id: str
     topics: list[str]
     description: str = ""
+
+
+class PublishMaterialsRequest(BaseModel):
+    """Prof republishes: derive class topics from uploaded lecture material."""
+    teacher_id: str
+    about: str = ""
+    materials: list[str] = Field(default_factory=list)  # file titles / names
 
 
 class CohortAnalytics(BaseModel):

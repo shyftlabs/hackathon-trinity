@@ -10,6 +10,7 @@ from synapse.models import (
     ClassroomCreate,
     ClassroomMaterialBatchCreate,
     SyllabusUpload,
+    PublishMaterialsRequest,
     ClassroomInvite,
     InviteStudentRequest,
 )
@@ -42,7 +43,7 @@ async def list_classes(teacher_id: str):
 
 @router.post("/", response_model=Classroom)
 async def create_class(payload: ClassroomCreate) -> Classroom:
-    """Create a new classroom."""
+    """Create a new classroom and return it with its generated join code."""
     try:
         classroom = Classroom(
             teacher_id=payload.teacher_id,
@@ -50,8 +51,9 @@ async def create_class(payload: ClassroomCreate) -> Classroom:
             description=payload.description,
             topics=payload.topics,
         )
-        await create_classroom(classroom)
-        return classroom
+        saved = await create_classroom(classroom)
+        # Reflect the server-assigned join code (and id) back to the client.
+        return Classroom(**{**classroom.model_dump(), **{k: saved[k] for k in ("id", "join_code") if k in saved}})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -85,6 +87,36 @@ async def upload_syllabus(classroom_id: str, payload: SyllabusUpload):
         await save_syllabus(classroom_id, payload.teacher_id, payload.topics, payload.description)
         await update_classroom_topics(classroom_id, payload.topics)
         return {"classroom_id": classroom_id, "topics": payload.topics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{classroom_id}/publish")
+async def publish_materials(classroom_id: str, payload: PublishMaterialsRequest):
+    """Derive the class topic list from the prof's uploaded lecture material
+    (via a Continuum agent) and publish it as the classroom syllabus so
+    students see the updated topics."""
+    classroom = await get_classroom(classroom_id)
+    if not classroom:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    try:
+        from synapse.agents.lifecycle import get_synapse_app
+        from synapse.agents.syllabus import extract_topics
+
+        topics = await extract_topics(
+            app=get_synapse_app(),
+            teacher_id=payload.teacher_id or classroom["teacher_id"],
+            about=payload.about,
+            materials=payload.materials,
+        )
+        if not topics:
+            raise HTTPException(status_code=422, detail="Could not derive topics from the material")
+
+        await save_syllabus(classroom_id, classroom["teacher_id"], topics, payload.about)
+        await update_classroom_topics(classroom_id, topics)
+        return {"classroom_id": classroom_id, "topics": topics}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

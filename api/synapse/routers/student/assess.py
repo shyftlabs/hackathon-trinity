@@ -12,20 +12,6 @@ from synapse.models import KnowledgeMap, TopicStatus
 router = APIRouter(prefix="/student/assess", tags=["student-assess"])
 
 
-@router.post("/{topic}", response_model=Assessment)
-async def create_assessment(topic: str, student_id: str) -> Assessment:
-    """Generate and persist a new assessment."""
-    from synapse.agents.lifecycle import get_synapse_app
-    from synapse.agents.assessment import generate_assessment
-    app = get_synapse_app()
-    try:
-        assessment = await generate_assessment(app, student_id, topic)
-        await save_assessment(assessment)
-        return assessment
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.post("/grade", response_model=GradeReport)
 async def grade(submission: AssessmentSubmission) -> GradeReport:
     """Grade a submitted assessment and update the student knowledge map."""
@@ -63,5 +49,20 @@ async def grade(submission: AssessmentSubmission) -> GradeReport:
             )
             await save_knowledge_map(updated_km)
         return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# NOTE: declared AFTER /grade so the literal path isn't captured by {topic}.
+@router.post("/{topic}", response_model=Assessment)
+async def create_assessment(topic: str, student_id: str) -> Assessment:
+    """Generate and persist a new assessment."""
+    from synapse.agents.lifecycle import get_synapse_app
+    from synapse.agents.assessment import generate_assessment
+    app = get_synapse_app()
+    try:
+        assessment = await generate_assessment(app, student_id, topic)
+        await save_assessment(assessment)
+        return assessment
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
