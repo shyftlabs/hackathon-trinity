@@ -165,6 +165,56 @@ class NotesRequest(BaseModel):
     content: str = ""
 
 
+# ── Classroom workflow DTOs ─────────────────────────────────────────────────────
+
+
+class InviteStudentRequest(BaseModel):
+    student_id: str
+
+
+class ClassroomInvite(BaseModel):
+    id: str = Field(default_factory=new_id)
+    classroom_id: str
+    student_id: str
+    teacher_id: str
+    code: str
+    status: Literal["pending", "accepted", "revoked"] = "pending"
+    expires_at: str | None = None
+
+
+class InviteAcceptance(BaseModel):
+    student_id: str
+
+
+class ClassroomMaterialCreate(BaseModel):
+    title: str
+    material_url: str
+    content_type: str = "application/pdf"
+    description: str = ""
+
+
+class ClassroomMaterialBatchCreate(BaseModel):
+    materials: list[ClassroomMaterialCreate]
+
+
+class ClassroomMaterial(BaseModel):
+    id: str = Field(default_factory=new_id)
+    classroom_id: str
+    teacher_id: str
+    title: str
+    material_url: str
+    content_type: str = "application/pdf"
+    description: str = ""
+
+
+class KnowledgeGapStartRequest(BaseModel):
+    student_id: str
+    classroom_id: str
+    mode: Literal["manual", "ai"] = "ai"
+    topics: list[str] = Field(default_factory=list)
+    max_topics: int = Field(default=3, ge=1, le=8)
+
+
 # ── Teacher models ─────────────────────────────────────────────────────────────
 
 class Teacher(BaseModel):

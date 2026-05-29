@@ -22,7 +22,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # ── Student routers (student developer owns these) ────────────────────────────
-from synapse.routers.student import diagnose, tutor, assess, notes, knowledge_map
+from synapse.routers.student import diagnose, tutor, assess, notes, knowledge_map, classroom as classroom_router
 
 # ── Teacher routers (teacher developer owns these) ────────────────────────────
 from synapse.routers.teacher import auth as teacher_auth, classes, analytics, reports
@@ -58,6 +58,7 @@ app.include_router(tutor.router)
 app.include_router(assess.router)
 app.include_router(notes.router)
 app.include_router(knowledge_map.router)
+app.include_router(classroom_router.router)
 
 # ── Mount teacher routes (/teacher/...) ───────────────────────────────────────
 app.include_router(teacher_auth.router)
@@ -82,11 +83,15 @@ async def root():
             "student": ["/student/diagnose/quiz", "/student/diagnose/evaluate",
                         "/student/knowledge-map/{id}", "/student/tutor/stream",
                         "/student/assess/{topic}", "/student/assess/grade",
-                        "/student/notes/", "/student/notes/{id}"],
+                        "/student/notes/", "/student/notes/{id}",
+                        "/student/classrooms/invites/{student_id}",
+                        "/student/classrooms/invites/{code}/accept",
+                        "/student/classrooms/knowledge-gap/start"],
             "teacher": ["/teacher/auth/register", "/teacher/auth/{id}",
                         "/teacher/classes/{teacher_id}/all", "/teacher/classes/",
                         "/teacher/classes/{id}", "/teacher/classes/{id}/syllabus",
-                        "/teacher/classes/{id}/enroll",
+                        "/teacher/classes/{id}/enroll", "/teacher/classes/{id}/invite",
+                        "/teacher/classes/{id}/invites", "/teacher/classes/{id}/materials",
                         "/teacher/analytics/{classroom_id}",
                         "/teacher/reports/{classroom_id}/summary"],
         },
