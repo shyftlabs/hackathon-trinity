@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, Fira_Code } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
 });
 
-const firaCode = Fira_Code({
+const geistMono = Geist_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Flux | Learning adapts. You flow.",
-  description: "AI-powered adaptive learning companion that transforms academic content into personalized study materials.",
+  title: "Flux | Study from the source",
+  description: "Turn course material into focused study sessions with notes, cards, quizzes, audio, and maps.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${inter.variable} ${firaCode.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
