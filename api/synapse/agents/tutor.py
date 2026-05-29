@@ -27,6 +27,12 @@ _MODALITY = {"visual":"Use diagrams, ASCII art, spatial metaphors.", "text":"Use
 _PACE = {"deep":"Explain the why, edge cases, adjacent topics.", "methodical":"Build from first principles, confirm at each step."}
 
 
+def _agent_name(prefix: str, topic: str) -> str:
+    """Continuum requires alphanumeric agent names with hyphens/underscores only."""
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", topic.lower()).strip("-") or "topic"
+    return f"{prefix}-{slug}"[:64]
+
+
 async def stream_tutor(app: SynapseApp, student_id: str, topic: str,
                        message: str, profile: LearningProfile) -> AsyncGenerator[dict, None]:
     instructions = (TUTOR_INSTRUCTIONS
@@ -34,7 +40,7 @@ async def stream_tutor(app: SynapseApp, student_id: str, topic: str,
         .replace("{modality_instruction}", _MODALITY[profile.modality])
         .replace("{pace_instruction}", _PACE[profile.pace]))
 
-    agent = app.make_agent(name=f"tutor-{topic.lower().replace(' ','-')}",
+    agent = app.make_agent(name=_agent_name("tutor", topic),
                            instructions=instructions, gateway_mode="quality",
                            max_turns=30, memory=True, memory_scope=AgentMemoryScope.CONVERSATION, tool_attention_k=4)
 

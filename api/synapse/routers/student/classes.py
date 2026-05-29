@@ -49,17 +49,30 @@ async def list_classes(student_id: str):
 
 @router.get("/{classroom_id}/topics")
 async def get_topics(classroom_id: str):
-    """Get the topic list for a classroom (from syllabus if available)."""
+    """Get the topic list for a classroom.
+
+    Accepts either a classroom UUID or a short join code, so the frontend can
+    pass the code from the URL without a separate resolution round-trip.
+    """
     try:
-        syllabus = await get_syllabus(classroom_id)
-        if syllabus:
-            return {"classroom_id": classroom_id, "topics": syllabus["topics"]}
-        # Fall back to classroom.topics
         from synapse.db.teacher.queries import get_classroom
-        classroom = await get_classroom(classroom_id)
+
+        # Resolve the identifier. Try join code first (a plain string match);
+        # fall back to a UUID lookup, guarded since a code is not a valid uuid.
+        classroom = await get_class_by_code(classroom_id)
+        if not classroom:
+            try:
+                classroom = await get_classroom(classroom_id)
+            except Exception:
+                classroom = None
         if not classroom:
             raise HTTPException(status_code=404, detail="Classroom not found")
-        return {"classroom_id": classroom_id, "topics": classroom.get("topics", [])}
+
+        resolved_id = classroom["id"]
+        syllabus = await get_syllabus(resolved_id)
+        if syllabus:
+            return {"classroom_id": resolved_id, "topics": syllabus["topics"]}
+        return {"classroom_id": resolved_id, "topics": classroom.get("topics", [])}
     except HTTPException:
         raise
     except Exception as e:

@@ -57,5 +57,11 @@ dev.db
 .venv/
 continuum/
 
+# python
+__pycache__/
+*.pyc
+*.py[cod]
+supabase/docker/db-data/
+
 *.log
 *.err
