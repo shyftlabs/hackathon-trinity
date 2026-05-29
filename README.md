@@ -91,7 +91,7 @@ cp .env.local.example .env.local
 5. Run Prisma migrations
 
 ```bash
-npx prisma migrate dev
+npm run db:migrate
 ```
 
 6. Start dev server
@@ -108,7 +108,7 @@ npm run dev
 
 Add these to `.env.local`:
 
-- `DATABASE_URL` (e.g. `file:./prisma/dev.db`)
+- `DATABASE_URL` (e.g. `file:./backend/prisma/dev.db`)
 - `SMART_GATEWAY_URL` (Continuum Smart Inference endpoint, for example `http://localhost:8787/v1`)
 - `SMART_GATEWAY_API_KEY` (Continuum Smart Inference API key)
 - `CONTINUUM_MODEL` (optional, defaults to `auto`)
@@ -130,10 +130,12 @@ No dedicated test suite is included yet. Use the app manually:
 
 ## 🗂 Project Structure
 
-- `src/app/` – Next.js routing, pages, API endpoints
-- `src/components/` – UI components and mode-specific renderers
-- `src/lib/` – business logic (`ai.ts`, `fileParser.ts`, `store.ts`, `prisma.ts`)
-- `prisma/` – schema, migrations
+- `frontend/src/app/` – Next.js routing, pages, and API route entrypoints
+- `frontend/src/components/` – UI components and mode-specific renderers
+- `frontend/src/lib/` – frontend utilities and Zustand store
+- `backend/src/` – server-side AI, file parsing, database adapter, and seed data
+- `backend/prisma/` – schema, migrations, and local SQLite database
+- `backend/continuum/` – Continuum backend service
 
 ---
 

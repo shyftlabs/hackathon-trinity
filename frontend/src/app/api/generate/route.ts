@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { generateModeContent, ModeId } from "@/lib/ai";
-import { prisma } from "@/lib/prisma";
+import { generateModeContent, ModeId } from "@backend/ai";
+import { prisma } from "@backend/prisma";
 
 export async function POST(request: Request) {
   try {

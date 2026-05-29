@@ -1,4 +1,4 @@
-import { generateModeContent } from './src/lib/ai.js';
+import { generateModeContent } from './backend/src/ai.js';
 
 async function testModes() {
   console.log('Testing all study modes...\n');

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateModeContent, ModeId } from "@/lib/ai";
+import { generateModeContent, ModeId } from "@backend/ai";
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ mode: s
 
     let fileContent = "";
     if (sessionId) {
-      const { prisma } = await import("@/lib/prisma");
+      const { prisma } = await import("@backend/prisma");
       const session = await prisma.session.findUnique({
         where: { id: sessionId },
         select: { notes: true }

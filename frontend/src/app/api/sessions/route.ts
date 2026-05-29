@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { mockSessions } from "@/lib/mockData";
-import { parseFile } from "@/lib/fileParser";
-import { generateSessionTitleAI } from "@/lib/ai";
+import { prisma } from "@backend/prisma";
+import { mockSessions } from "@backend/mockSessions";
+import { parseFile } from "@backend/fileParser";
+import { generateSessionTitleAI } from "@backend/ai";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

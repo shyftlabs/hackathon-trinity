@@ -1,4 +1,4 @@
-import { generateModeContent } from './src/lib/ai.js';
+import { generateModeContent } from './backend/src/ai.js';
 
 async function testGeneration() {
   console.log('Testing AI generation fixes...');

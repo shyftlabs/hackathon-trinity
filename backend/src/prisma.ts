@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { createClient, type InValue } from "@libsql/client";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 type SessionRecord = {
   id: string;
@@ -79,10 +81,17 @@ const SESSION_COLUMNS = new Set([
   "files",
 ]);
 
+const backendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const defaultDatabaseUrl = `file:${path.join(backendDir, "prisma/dev.db")}`;
+
 function databaseUrl(): string {
-  const url = process.env.DATABASE_URL || "file:./prisma/dev.db";
-  if (url === "file:./dev.db") {
-    return "file:./prisma/dev.db";
+  const url = process.env.DATABASE_URL || defaultDatabaseUrl;
+  if (
+    url === "file:./dev.db" ||
+    url === "file:./prisma/dev.db" ||
+    url === "file:./backend/prisma/dev.db"
+  ) {
+    return defaultDatabaseUrl;
   }
   return url;
 }

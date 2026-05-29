@@ -3,7 +3,7 @@
 import { useEffect, useState, use, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppStore, Session } from "@/lib/store";
-import { ModeId } from "@/lib/ai";
+import type { ModeId } from "@backend/ai";
 import { ModeSelector } from "@/components/modes/ModeSelector";
 import { NotesDisplay } from "@/components/NotesDisplay";
 import { MindMap } from "@/components/MindMap";

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateModeContent } from "@/lib/ai";
+import { generateModeContent } from "@backend/ai";
 
 export const dynamic = 'force-dynamic';
 

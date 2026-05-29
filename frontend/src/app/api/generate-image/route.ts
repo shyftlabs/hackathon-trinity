@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateContinuumText } from '@/lib/ai';
+import { generateContinuumText } from '@backend/ai';
 
 export async function POST(request: NextRequest) {
   try {
