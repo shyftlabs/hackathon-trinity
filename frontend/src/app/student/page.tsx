@@ -5,7 +5,10 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/landing/Navbar";
-import { MOCK_CLASS } from "@/lib/mockData";
+import { studentApi } from "@/lib/synapseApi";
+
+const DEMO_STUDENT_ID = "demo-student-001";
+const DEMO_CODE = "DEMO01";
 
 export default function StudentPage() {
   const router = useRouter();
@@ -13,22 +16,39 @@ export default function StudentPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) { setError("Please enter a class code."); return; }
-    if (trimmed !== MOCK_CLASS.code) {
-      setError(`No class found for "${trimmed}". Try SYN-4829 for the demo.`);
-      return;
-    }
     setError("");
     setLoading(true);
-    setTimeout(() => router.push(`/student/class/${trimmed}`), 500);
+    try {
+      // Register student if first visit (idempotent upsert)
+      const studentId = localStorage.getItem("synapse_student_id") ?? DEMO_STUDENT_ID;
+      await studentApi.register(studentId, "", "");
+      // Join by code
+      await studentApi.joinClass(studentId, trimmed);
+      router.push(`/student/class/${trimmed}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("404")) {
+        setError(`No class found for "${trimmed}". Check the code and try again.`);
+      } else {
+        setError("Could not connect to server. Make sure the API is running on port 8000.");
+      }
+      setLoading(false);
+    }
   };
 
-  const handleDemo = () => {
+  const handleDemo = async () => {
     setLoading(true);
-    setTimeout(() => router.push(`/student/class/${MOCK_CLASS.code}`), 300);
+    try {
+      await studentApi.register(DEMO_STUDENT_ID, "demo@synapse.ai", "Demo Student");
+      router.push(`/student/class/${DEMO_CODE}`);
+    } catch {
+      // Fallback: still navigate even if API is down
+      router.push(`/student/class/${DEMO_CODE}`);
+    }
   };
 
   return (
@@ -39,7 +59,6 @@ export default function StudentPage() {
 
       <main className="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-24">
         <div className="w-full max-w-md">
-          {/* Pill badge */}
           <div className="mb-8 flex justify-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-[13px] font-medium text-[#424245] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl">
               <BookOpen className="size-3.5 text-[#0066cc]" strokeWidth={1.8} />
@@ -54,7 +73,6 @@ export default function StudentPage() {
             Your teacher will share a code or link to get you in.
           </p>
 
-          {/* Glass card */}
           <div className="liquid-shell rounded-[34px] p-3">
             <div className="rounded-[26px] border border-white/70 bg-[#fbfbfd]/76 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.96)] backdrop-blur-2xl">
               <form onSubmit={handleJoin} className="space-y-3">
@@ -81,10 +99,7 @@ export default function StudentPage() {
                   {loading ? (
                     <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   ) : (
-                    <>
-                      Join class
-                      <ArrowRight className="size-4" strokeWidth={1.8} />
-                    </>
+                    <>Join class<ArrowRight className="size-4" strokeWidth={1.8} /></>
                   )}
                 </button>
               </form>
@@ -100,7 +115,7 @@ export default function StudentPage() {
                 className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#1d1d1f]/12 bg-white/60 text-[14px] font-medium text-[#424245] transition-all duration-150 hover:bg-white active:scale-[0.97]"
               >
                 <Zap className="size-3.5 text-[#0066cc]" strokeWidth={2} />
-                Open demo class (AP Biology)
+                Open demo class
               </button>
             </div>
           </div>

@@ -1,251 +1,165 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, RotateCcw, Trophy, X, Zap } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, CheckCircle, XCircle, Zap, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_CLASS, MOCK_QUIZ } from "@/lib/mockData";
+import { studentApi, type Assessment, type GradeReport } from "@/lib/synapseApi";
 
-export default function StudentQuizPage({ params }: { params: Promise<{ code: string }> }) {
+const DEMO_STUDENT_ID = "demo-student-001";
+const getStudentId = () =>
+  (typeof window !== "undefined" && localStorage.getItem("synapse_student_id")) || DEMO_STUDENT_ID;
+
+export default function QuizPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
+  const search = useSearchParams();
+  const topic = search.get("topic") ?? "";
+  const studentId = getStudentId();
 
-  const handleSubmit = () => {
-    let correct = 0;
-    MOCK_QUIZ.forEach((q, i) => {
-      if (selectedAnswers[i] === q.answer_index) correct++;
-    });
-    setScore(correct);
-    setSubmitted(true);
-    // scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const [phase, setPhase] = useState<"loading" | "quiz" | "result" | "error">("loading");
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [report, setReport] = useState<GradeReport | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleReset = () => {
-    setSelectedAnswers({});
-    setSubmitted(false);
-    setScore(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  useEffect(() => {
+    if (!topic) { setError("No topic selected — go back and start studying first."); setPhase("error"); return; }
+    studentApi.memoryQuiz(studentId, topic, "")
+      .then(a => { setAssessment(a); setPhase("quiz"); })
+      .catch(() => {
+        studentApi.createAssessment(studentId, topic)
+          .then(a => { setAssessment(a); setPhase("quiz"); })
+          .catch(e => { setError(String(e)); setPhase("error"); });
+      });
+  }, [topic, studentId]);
 
-  const answeredCount = Object.keys(selectedAnswers).length;
-  const percent = score !== null ? Math.round((score / MOCK_QUIZ.length) * 100) : null;
+  const handleSelect = (questionId: string, label: string) =>
+    setAnswers(prev => ({ ...prev, [questionId]: label }));
 
-  const getGrade = (pct: number) => {
-    if (pct >= 90) return { label: "Excellent", color: "#10b981" };
-    if (pct >= 70) return { label: "Good", color: "#0066cc" };
-    if (pct >= 50) return { label: "Keep studying", color: "#f59e0b" };
-    return { label: "Review needed", color: "#ef4444" };
+  const handleSubmit = async () => {
+    if (!assessment) return;
+    setSubmitting(true);
+    try {
+      const r = await studentApi.gradeAssessment(
+        assessment.id, studentId, topic,
+        assessment.questions.map(q => ({ question_id: q.id, response: answers[q.id] ?? "" }))
+      );
+      setReport(r);
+      setPhase("result");
+    } catch (e) { setError(String(e)); setPhase("error"); }
+    finally { setSubmitting(false); }
   };
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f]">
-      {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-[#1d1d1f]/8 bg-white/80 backdrop-blur-2xl">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-6">
-          <Link
-            href={`/student/class/${code}`}
-            className="flex items-center gap-2 text-[14px] font-medium text-[#6e6e73] transition hover:text-[#1d1d1f]"
-          >
-            <ArrowLeft className="size-4" strokeWidth={1.8} />
-            Back to study guide
-          </Link>
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <Link href={`/student/class/${code}`} className="mb-6 inline-flex items-center gap-2 text-[14px] text-[#6e6e73] transition hover:text-[#1d1d1f]">
+          <ArrowLeft className="size-4" strokeWidth={1.8} />Back to study
+        </Link>
 
-          <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-full border border-[#0066cc]/18 bg-[#0066cc]/8">
-              <Zap className="size-3.5 text-[#0066cc]" strokeWidth={2} />
-            </div>
-            <span className="text-[15px] font-semibold tracking-[-0.02em]">Synapse</span>
-          </div>
-
-          <div className="text-[13px] text-[#86868b]">
-            {submitted
-              ? `Score: ${score}/${MOCK_QUIZ.length}`
-              : `${answeredCount} / ${MOCK_QUIZ.length} answered`}
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        {/* Title */}
-        <div className="mb-8">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#f59e0b]/25 bg-[#f59e0b]/8 px-3 py-1.5 text-[13px] font-medium text-[#92400e]">
-            <Trophy className="size-3.5 text-[#f59e0b]" strokeWidth={1.8} />
-            Knowledge check
-          </div>
-          <h1 className="text-[32px] font-semibold leading-[1.05] tracking-[-0.025em]">
-            {MOCK_CLASS.name} Quiz
-          </h1>
-          <p className="mt-2 text-[17px] text-[#6e6e73]">
-            {MOCK_CLASS.topic} · {MOCK_QUIZ.length} questions
-          </p>
-        </div>
-
-        {/* Score card (shown after submit) */}
-        {submitted && score !== null && (() => {
-          const grade = getGrade(percent!);
-          return (
-            <div
-              className="mb-8 overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)]"
-            >
-              <div className="px-8 py-8 text-center">
-                <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full border-4" style={{ borderColor: `${grade.color}30`, backgroundColor: `${grade.color}10` }}>
-                  <span className="text-[28px] font-bold" style={{ color: grade.color }}>
-                    {percent}%
-                  </span>
-                </div>
-                <h2 className="text-[26px] font-semibold">{grade.label}</h2>
-                <p className="mt-1 text-[17px] text-[#6e6e73]">
-                  {score} out of {MOCK_QUIZ.length} correct
-                </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <button
-                    onClick={handleReset}
-                    className="flex items-center gap-2 rounded-full border border-[#1d1d1f]/12 bg-[#f5f5f7] px-5 py-2.5 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-white active:scale-[0.97]"
-                  >
-                    <RotateCcw className="size-4" strokeWidth={1.8} />
-                    Try again
-                  </button>
-                  <Link
-                    href={`/student/class/${code}`}
-                    className="flex items-center gap-2 rounded-full bg-[#0066cc] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[#0071e3] active:scale-[0.97]"
-                  >
-                    Keep studying
-                  </Link>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Questions */}
-        <div className="space-y-6">
-          {MOCK_QUIZ.map((q, i) => {
-            const selected = selectedAnswers[i];
-            const isCorrect = submitted && selected === q.answer_index;
-            const isWrong = submitted && selected !== undefined && selected !== q.answer_index;
-
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "rounded-[24px] border bg-white p-6 transition-all",
-                  submitted
-                    ? isCorrect
-                      ? "border-[#10b981]/30 shadow-[0_0_0_1px_rgba(16,185,129,0.15)]"
-                      : isWrong
-                        ? "border-[#ef4444]/30 shadow-[0_0_0_1px_rgba(239,68,68,0.12)]"
-                        : selected === undefined
-                          ? "border-[#f59e0b]/30"
-                          : "border-[#1d1d1f]/10"
-                    : "border-[#1d1d1f]/8 hover:border-[#1d1d1f]/16"
-                )}
-              >
-                {/* Question header */}
-                <div className="mb-5 flex items-start gap-3">
-                  <div className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold",
-                    submitted && isCorrect
-                      ? "bg-[#10b981] text-white"
-                      : submitted && isWrong
-                        ? "bg-[#ef4444] text-white"
-                        : "border border-[#1d1d1f]/10 bg-[#f5f5f7] text-[#6e6e73]"
-                  )}>
-                    {submitted
-                      ? isCorrect ? <Check className="size-4" strokeWidth={2.5} /> : isWrong ? <X className="size-4" strokeWidth={2.5} /> : i + 1
-                      : i + 1}
-                  </div>
-                  <p className="text-[16px] font-medium leading-6 text-[#1d1d1f]">{q.question}</p>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-2 pl-10">
-                  {q.options.map((opt, oi) => {
-                    const isSelected = selected === oi;
-                    const isCorrectOption = submitted && oi === q.answer_index;
-                    const isWrongSelected = submitted && isSelected && oi !== q.answer_index;
-
-                    return (
-                      <button
-                        key={oi}
-                        onClick={() => !submitted && setSelectedAnswers(prev => ({ ...prev, [i]: oi }))}
-                        disabled={submitted}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-[14px] border px-4 py-3 text-left text-[14px] transition-all duration-150",
-                          submitted
-                            ? isCorrectOption
-                              ? "border-[#10b981]/40 bg-[#10b981]/8 text-[#065f46]"
-                              : isWrongSelected
-                                ? "border-[#ef4444]/40 bg-[#ef4444]/8 text-[#991b1b]"
-                                : "border-[#1d1d1f]/8 bg-white/50 text-[#86868b]"
-                            : isSelected
-                              ? "border-[#0066cc]/40 bg-[#0066cc]/6 text-[#1d1d1f]"
-                              : "border-[#1d1d1f]/8 bg-white/60 text-[#424245] hover:border-[#1d1d1f]/20 hover:bg-white active:scale-[0.99]"
-                        )}
-                      >
-                        <span className={cn(
-                          "flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors",
-                          submitted
-                            ? isCorrectOption
-                              ? "border-[#10b981] bg-[#10b981] text-white"
-                              : isWrongSelected
-                                ? "border-[#ef4444] bg-[#ef4444] text-white"
-                                : "border-[#1d1d1f]/15 text-[#86868b]"
-                            : isSelected
-                              ? "border-[#0066cc] bg-[#0066cc] text-white"
-                              : "border-[#1d1d1f]/20 text-[#6e6e73]"
-                        )}>
-                          {String.fromCharCode(65 + oi)}
-                        </span>
-                        <span>{opt}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Explanation */}
-                {submitted && (
-                  <div className={cn(
-                    "mt-4 rounded-[12px] px-4 py-3 text-[13px] leading-5 pl-10",
-                    isCorrect ? "bg-[#10b981]/8 text-[#065f46]" : "bg-[#f5f5f7] text-[#424245]"
-                  )}>
-                    <span className="font-semibold">Explanation: </span>{q.explanation}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Submit button */}
-        {!submitted && (
-          <div className="sticky bottom-6 mt-8 flex justify-center">
-            <button
-              onClick={handleSubmit}
-              disabled={answeredCount < MOCK_QUIZ.length}
-              className={cn(
-                "flex h-12 items-center gap-2.5 rounded-full px-8 text-[15px] font-medium text-white shadow-[0_8px_24px_rgba(0,102,204,0.25)] transition-all duration-150",
-                answeredCount < MOCK_QUIZ.length
-                  ? "bg-[#0066cc]/50 cursor-not-allowed"
-                  : "bg-[#0066cc] hover:bg-[#0071e3] active:scale-[0.97]"
-              )}
-            >
-              <Trophy className="size-4" strokeWidth={1.8} />
-              Submit quiz
-              {answeredCount < MOCK_QUIZ.length && (
-                <span className="text-white/70 text-[13px]">
-                  ({answeredCount}/{MOCK_QUIZ.length})
-                </span>
-              )}
-            </button>
+        {phase === "loading" && (
+          <div className="flex flex-col items-center py-24">
+            <div className="mb-4 size-10 animate-spin rounded-full border-2 border-[#0066cc]/20 border-t-[#0066cc]" />
+            <p className="text-[15px] text-[#6e6e73]">Generating personalized quiz using your memory…</p>
+            <p className="mt-2 text-[13px] text-[#86868b]">Targeting gaps from your tutor session</p>
           </div>
         )}
 
-        {/* Bottom padding */}
-        <div className="h-20" />
-      </main>
+        {phase === "error" && (
+          <div className="rounded-[24px] border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-[15px] text-red-600">{error}</p>
+            <Link href={`/student/class/${code}`} className="mt-4 inline-block text-[14px] text-[#0066cc] hover:underline">← Back</Link>
+          </div>
+        )}
+
+        {phase === "quiz" && assessment && (
+          <>
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="flex size-8 items-center justify-center rounded-full bg-[#0066cc]/10">
+                  <Zap className="size-4 text-[#0066cc]" strokeWidth={2} />
+                </div>
+                <h1 className="text-[26px] font-semibold tracking-[-0.025em]">{topic}</h1>
+              </div>
+              <p className="text-[14px] text-[#6e6e73]">{assessment.questions.length} questions · Personalized to your learning</p>
+            </div>
+
+            <div className="space-y-5">
+              {assessment.questions.map((q, qi) => (
+                <div key={q.id} className="rounded-[24px] border border-[#1d1d1f]/8 bg-white p-5">
+                  <p className="mb-4 text-[15px] font-medium leading-6">
+                    <span className="mr-2 text-[#86868b]">{qi + 1}.</span>{q.prompt}
+                  </p>
+                  {q.type === "mcq" && q.choices ? (
+                    <div className="space-y-2">
+                      {q.choices.map(c => (
+                        <button key={c.label} onClick={() => handleSelect(q.id, c.label)}
+                          className={cn("flex w-full items-center gap-3 rounded-[16px] border px-4 py-3 text-left text-[14px] transition-all",
+                            answers[q.id] === c.label ? "border-[#0066cc]/40 bg-[#0066cc]/8 text-[#0066cc]" : "border-[#1d1d1f]/10 hover:border-[#0066cc]/20 hover:bg-[#0066cc]/4")}>
+                          <span className="size-6 shrink-0 rounded-full border border-current flex items-center justify-center text-[12px] font-semibold">{c.label}</span>
+                          {c.text}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <textarea value={answers[q.id] ?? ""} onChange={e => handleSelect(q.id, e.target.value)}
+                      placeholder="Type your answer…"
+                      className="w-full rounded-[16px] border border-[#1d1d1f]/10 bg-[#f5f5f7] p-3 text-[14px] outline-none focus:border-[#0066cc]/40 min-h-[80px] resize-none" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button onClick={handleSubmit} disabled={!assessment.questions.every(q => answers[q.id]) || submitting}
+              className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0066cc] text-[15px] font-medium text-white transition-all hover:bg-[#0071e3] disabled:opacity-50">
+              {submitting ? <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                : <><Trophy className="size-4" strokeWidth={1.8} />Submit quiz</>}
+            </button>
+          </>
+        )}
+
+        {phase === "result" && report && (
+          <div>
+            <div className={cn("mb-6 rounded-[28px] p-6 text-center",
+              report.score >= 0.85 ? "bg-[#10b981]/10 border border-[#10b981]/20" :
+              report.score >= 0.60 ? "bg-[#f59e0b]/10 border border-[#f59e0b]/20" :
+              "bg-red-50 border border-red-200")}>
+              <p className="text-[48px] font-bold leading-none">{Math.round(report.score * 100)}%</p>
+              <p className="mt-2 text-[17px] font-semibold capitalize">{report.updated_status.level.replace(/_/g, " ")}</p>
+              <p className="mt-2 text-[14px] text-[#6e6e73]">{report.updated_status.evidence}</p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {report.per_question.map((r, i) => {
+                const q = assessment?.questions.find(q => q.id === r.question_id);
+                return (
+                  <div key={r.question_id} className={cn("rounded-[20px] border p-4",
+                    r.correct ? "border-[#10b981]/20 bg-[#10b981]/5" : "border-red-200 bg-red-50")}>
+                    <div className="flex items-start gap-3">
+                      {r.correct ? <CheckCircle className="size-5 shrink-0 text-[#10b981] mt-0.5" strokeWidth={1.8} />
+                        : <XCircle className="size-5 shrink-0 text-red-400 mt-0.5" strokeWidth={1.8} />}
+                      <div>
+                        <p className="text-[14px] font-medium">{q?.prompt ?? `Q${i + 1}`}</p>
+                        <p className="mt-1 text-[12px] text-[#6e6e73]">
+                          Your: <strong>{r.student_response || "—"}</strong> · Correct: <strong>{r.correct_answer}</strong>
+                        </p>
+                        <p className="mt-1 text-[12px] text-[#424245]">{r.rationale}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Link href={`/student/class/${code}`}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0066cc] text-[15px] font-medium text-white transition-all hover:bg-[#0071e3]">
+              <ArrowLeft className="size-4" strokeWidth={1.8} />Back to study
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
