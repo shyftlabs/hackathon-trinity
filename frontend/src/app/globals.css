@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+@layer base {
+  :root {
+    --background: #f5f5f7;
+    --foreground: #1d1d1f;
+    --card: #ffffff;
+    --card-foreground: #1d1d1f;
+    --popover: #ffffff;
+    --popover-foreground: #1d1d1f;
+    --primary: #0066cc;
+    --primary-foreground: #ffffff;
+    --secondary: #ffffff;
+    --secondary-foreground: #1d1d1f;
+    --muted: #ececf0;
+    --muted-foreground: #6e6e73;
+    --accent: #eaf3ff;
+    --accent-foreground: #003f7f;
+    --destructive: #d92d20;
+    --destructive-foreground: #fafafa;
+    --border: rgba(29, 29, 31, 0.1);
+    --input: rgba(29, 29, 31, 0.12);
+    --ring: #0066cc;
+    --radius: 0.875rem;
+  }
+
+  .dark {
+    --background: #18181b;
+    --foreground: #fafafa;
+    --card: #18181b;
+    --card-foreground: #fafafa;
+    --popover: #18181b;
+    --popover-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --secondary-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fafafa;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-variant-numeric: tabular-nums;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  a,
+  input {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .liquid-canvas {
+    background:
+      radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.9), transparent 28%),
+      radial-gradient(circle at 78% 10%, rgba(0, 102, 204, 0.12), transparent 26%),
+      radial-gradient(circle at 70% 82%, rgba(255, 255, 255, 0.78), transparent 32%),
+      linear-gradient(135deg, #f9f9fb 0%, #eeeeF2 42%, #f7f7f9 100%);
+  }
+
+  .liquid-canvas::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    opacity: 0.42;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.72) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.72) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 50% 46%, black 0%, transparent 72%);
+  }
+
+  .liquid-panel {
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.48)),
+      rgba(255, 255, 255, 0.52);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.38),
+      0 24px 80px rgba(29, 29, 31, 0.12);
+    backdrop-filter: blur(28px) saturate(1.28);
+  }
+
+  .liquid-shell {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.34)),
+      rgba(245, 245, 247, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      inset 0 0 32px rgba(255, 255, 255, 0.34),
+      0 34px 90px rgba(29, 29, 31, 0.16);
+    backdrop-filter: blur(34px) saturate(1.35);
+  }
+
+  .glass {
+    @apply bg-white/[0.01] backdrop-blur-md border border-white/[0.05];
+  }
+  .dark .glass {
+    @apply bg-zinc-950/40 backdrop-blur-md border border-white/[0.08];
+  }
+  .glass-card {
+    @apply bg-white/[0.02] border border-white/[0.08] shadow-sm transition-colors hover:bg-white/[0.04];
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50;
+  }
+  .accent-glow {
+    @apply relative before:absolute before:-inset-1 before:bg-gradient-to-r before:from-emerald-500/20 before:to-emerald-500/0 before:rounded-lg before:blur-md before:opacity-30 before:-z-10;
+  }
+
+  /* Synapse stagger-in animation */
+  .synapse-stagger {
+    animation: synapse-fade-up 320ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  @keyframes synapse-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scrollbar hide */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

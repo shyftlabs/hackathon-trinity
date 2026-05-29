@@ -3,13 +3,28 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import { defineConfig } from "prisma/config";
+import path from "node:path";
+
+const defaultDatabaseUrl = `file:${path.join(process.cwd(), "backend/prisma/dev.db")}`;
+
+function databaseUrl(): string {
+  const url = process.env.DATABASE_URL || defaultDatabaseUrl;
+  if (
+    url === "file:./dev.db" ||
+    url === "file:./prisma/dev.db" ||
+    url === "file:./backend/prisma/dev.db"
+  ) {
+    return defaultDatabaseUrl;
+  }
+  return url;
+}
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: "backend/prisma/schema.prisma",
   datasource: {
-    url: process.env.DATABASE_URL!,
+    url: databaseUrl(),
   },
   migrations: {
-    path: "prisma/migrations",
+    path: "backend/prisma/migrations",
   }
 });

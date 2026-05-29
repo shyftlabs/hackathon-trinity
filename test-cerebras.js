@@ -1,4 +1,4 @@
-import { generateModeContent } from './src/lib/ai.ts';
+import { generateModeContent } from './backend/src/ai.ts';
 
 async function testCerebras() {
   console.log('Testing Cerebras integration...\n');
