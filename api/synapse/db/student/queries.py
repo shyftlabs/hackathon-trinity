@@ -143,3 +143,61 @@ async def list_notes(student_id: str) -> list[dict]:
         .execute()
     )
     return result.data or []
+
+
+# ── Flashcards ─────────────────────────────────────────────────────────────────
+
+async def save_flashcards(student_id: str, topic: str, cards: list[dict]) -> dict:
+    client = get_client()
+    result = client.table("flashcards").insert({
+        "student_id": student_id,
+        "topic": topic,
+        "cards": cards,
+    }).execute()
+    return result.data[0] if result.data else {}
+
+
+async def get_flashcards(student_id: str, topic: str) -> list[dict]:
+    client = get_client()
+    result = (
+        client.table("flashcards")
+        .select("cards, created_at")
+        .eq("student_id", student_id)
+        .eq("topic", topic)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        return []
+    return result.data[0].get("cards", [])
+
+
+# ── Class discovery ────────────────────────────────────────────────────────────
+
+async def get_class_by_code(code: str) -> dict | None:
+    client = get_client()
+    result = (
+        client.table("classrooms")
+        .select("*")
+        .eq("join_code", code.upper())
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
+
+
+async def get_enrolled_classes(student_id: str) -> list[dict]:
+    client = get_client()
+    result = (
+        client.table("enrollments")
+        .select("classroom_id, classrooms(id, name, description, topics, teacher_id, join_code)")
+        .eq("student_id", student_id)
+        .execute()
+    )
+    classes = []
+    for row in (result.data or []):
+        classroom = row.get("classrooms") or {}
+        if classroom:
+            classes.append(classroom)
+    return classes
