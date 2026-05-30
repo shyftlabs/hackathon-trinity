@@ -1,12 +1,13 @@
 {
-  "name": "frontend",
+  "name": "flux-ai-learning-studio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "cd frontend && WATCHPACK_POLLING=true next dev --webpack -H 127.0.0.1",
+    "build": "next build frontend --webpack",
+    "start": "next start frontend",
+    "lint": "eslint frontend backend/src test-ai.ts test-cerebras.js test-modes.js",
+    "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

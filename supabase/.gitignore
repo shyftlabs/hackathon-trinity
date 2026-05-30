@@ -1,0 +1,16 @@
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
+
+# python
+__pycache__/
+*.pyc
+*.py[cod]
+
+# local supabase postgres data
+docker/db-data/

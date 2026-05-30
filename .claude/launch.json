@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "synapse-frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3001"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "frontend", "--webpack", "--port", "3001"],
       "port": 3001
     }
   ]
