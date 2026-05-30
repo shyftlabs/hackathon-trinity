@@ -1,0 +1,68 @@
+INFO:     Started server process [3804]
+INFO:     Waiting for application startup.
+[05/29/26 17:54:49] INFO     StreamableHTTP      streamable_http_manager.py:128
+                             session manager                                   
+                             started                                           
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8888 (Press CTRL+C to quit)
+[05/29/26 17:55:15] INFO     Created new         streamable_http_manager.py:255
+                             transport with                                    
+                             session ID:                                       
+                             bd58702f632a4b0f87e                               
+                             8c90b3deb028e                                     
+                    INFO     Processing request of type           server.py:727
+                             ListToolsRequest                                  
+[05/29/26 17:55:22] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:48] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:49] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:50] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:51] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:52] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:57] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:55:59] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:56:00] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:56:02] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:56:03] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 17:57:02] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 18:00:40] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 18:00:41] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 18:00:43] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 18:00:44] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+[05/29/26 18:00:49] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   

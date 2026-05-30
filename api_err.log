@@ -1,0 +1,12 @@
+INFO:     Started server process [19428]
+INFO:     Waiting for application startup.
+C:\Users\awais\AppData\Local\Programs\Python\Python314\Lib\contextlib.py:109: DeprecationWarning: Use `streamable_http_client` instead.
+  self.gen = func(*args, **kwds)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+D:\Semester_2_Winter_(2026)\Coding Projects\hackathon-trinity\api\synapse\agents\..\..\..\continuum\src\orchestrator\session\providers\redis.py:514: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+  pipe.setex(
+D:\Semester_2_Winter_(2026)\Coding Projects\hackathon-trinity\api\synapse\agents\..\..\..\continuum\src\orchestrator\session\providers\redis.py:418: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+  pipe.setex(metadata_key, self._config.ttl_seconds, metadata_json_updated)
+D:\Semester_2_Winter_(2026)\Coding Projects\hackathon-trinity\api\synapse\agents\..\..\..\continuum\src\orchestrator\session\providers\redis.py:262: DeprecationWarning: Call to deprecated setex. (Use 'set' instead.) -- Deprecated since version 2.6.12.
+  pipe.setex(
